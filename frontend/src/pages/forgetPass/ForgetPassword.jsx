@@ -2,6 +2,7 @@ import { useState } from "react";
 import "./projectSoft.css";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../../firebase.js";
+import bgImage from "./image copy 2.png";
 
 export default function ForgetPassword() {
   const [step, setStep] = useState(1);
@@ -55,8 +56,7 @@ export default function ForgetPassword() {
 
   return (
     <div>
-      <img src="/image copy 2.png" alt="forget password" />
-
+      <img src={bgImage} alt="" />
       <div className="forgetPass">
         {step === 1 && (
           <>
