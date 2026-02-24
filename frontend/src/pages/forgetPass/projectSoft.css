@@ -1,0 +1,112 @@
+
+/* الجسم */
+body {
+    background-image: url('e58464d8a2c912644139b96e4eba2be2.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    overflow: hidden; 
+}
+.forgetPass {
+    width: 450px;          
+    min-width: 450px;
+    max-width: 450px;
+    padding: 40px;
+    background: linear-gradient(145deg, #ffffff, #3a5d95);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    
+
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.forgetPass h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #0a2c5a;
+}
+
+
+.forgetPass p {
+    margin-bottom: 15px;
+}
+
+
+.forgetPass label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+
+.forgetPass input {
+    width: 100%;
+    max-width: 370px;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    display: block;
+}
+
+
+.forgetPass button {
+    width: 100%;
+    max-width: 370px;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background-color: #0a2c5a;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    display: block;
+}
+
+.forgetPass button:hover {
+    background-color: #163e7a;
+}
+
+
+.success {
+    color: green;
+    text-align: center;
+    margin-top: 15px;
+}
+
+
+#backLogin {
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+    color: blue;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+#backLogin:hover {
+    text-decoration: underline;
+}
+
+
+.hidden {
+    display: none;
+}
+img{
+    width:900px;
+    height:500px;
+    margin-top: 180px;
+    margin-right: 1200px;
+   margin-bottom: 500px;
+}

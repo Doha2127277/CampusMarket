@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="projectSoft.css">
+</head>
+<body>
+   
+     <img src="image copy 2.png" alt="">
+    <div class="forgetPass">
+   
+        <h2 id="Title" class="hidden">Reset Your Passward  </h2>
+        <div id="StepOne" > 
+        <p><b>Please Enter university email and we well send you a verification code.</b></p>
+        <label for="email"> <b>University Email :</b> </label> 
+        <input type="email" id="email" placeholder="example@university.edu"><br>
+        <p class="error" id="emailError"></p>
+        <button id="send-code">Get Code</button><br> <br>
+        
+        </div>   
+ 
+        <div id="StepTwo" class="hidden">
+<input type="text" id="code" placeholder="Enter verification code" class="error">
+<p class="erroError" id="CodeError"></p>
+
+<button id="verifyCod">Verify Code </button>
+        </div>
+    
+        <div id="StepThree" class="hidden">
+            <input type="password" id="password" placeholder="New Password">
+            <input type="password" id="ConfirmPassword" placeholder="Confirm Password">
+            <p class="error" id="passError"></p>
+            <button id="resetPassB">Reset Password</button>
+        </div>
+        <p class="success" id="successMsg"></p>
+        <a href="" id="backLogin" class="hidden">Back to Login</a>
+      
+       
+    
+    </div>
+    <script src="projectSoft.js"></script>
+</body>
+</html>
