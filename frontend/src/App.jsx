@@ -1,19 +1,19 @@
-/*import './App.css'
-import ForgetPassword from "./pages/forgetPass/ForgetPassword";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import LoginPage from './LoginPage/LoginPage';
+import Register from './RigsterPage/Rigster'; 
+import ForgetPassword from './pages/forgetPass/ForgetPassword';
 
 function App() {
-  return <ForgetPassword />;
-}
-
-
-export default App
-*/
-
-import React from "react";
-import Rigster from "./RigsterPage/Rigster";
-
-function App() {
-  return <Rigster />;
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forget-password" element={<ForgetPassword />} />
+      </Routes>
+    </Router>
+  );
 }
 
 export default App;
