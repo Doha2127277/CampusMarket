@@ -1,4 +1,4 @@
-import './App.css'
+/*import './App.css'
 import ForgetPassword from "./pages/forgetPass/ForgetPassword";
 
 function App() {
@@ -7,3 +7,13 @@ function App() {
 
 
 export default App
+*/
+
+import React from "react";
+import Rigster from "./RigsterPage/Rigster";
+
+function App() {
+  return <Rigster />;
+}
+
+export default App;

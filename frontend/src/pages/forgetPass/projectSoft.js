@@ -1,113 +1,47 @@
-const StepOne =document.getElementById("StepOne");
-const StepTwo =document.getElementById("StepTwo");
-const StepThree =document.getElementById("StepThree");
-const emailInp=document.getElementById("email");
-const CodeInp=document.getElementById("code");
-const passInp=document.getElementById("password");
-const ConfPassInp=document.getElementById("ConfirmPassword");
+// Register.js
+import { auth } from "./firebase.js";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
-const emailErr=document.getElementById("emailError");
-const codeErr=document.getElementById("CodeError");
-const passErr=document.getElementById("passError");
-const succMsg =document.getElementById("successMsg");
+const form = document.getElementById("rigesterForm");
+const fullNameInput = form.querySelector('input[type="text"]');
+const emailInput = form.querySelector('input[type="email"]');
+const passwordInput = form.querySelectorAll('input[type="password"]')[0];
+const confirmPasswordInput = form.querySelectorAll('input[type="password"]')[1];
+const roleSelect = document.getElementById("role");
 
-const getCodeB=document.getElementById("send-code");
-const verifyCodeB=document.getElementById("verifyCod");
-const resetPassB=document.getElementById("resetPassB");
-const backLogin = document.getElementById("backLogin");
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
+  const fullName = fullNameInput.value.trim();
+  const email = emailInput.value.trim().toLowerCase();
+  const password = passwordInput.value;
+  const confirmPassword = confirmPasswordInput.value;
+  const role = roleSelect.value;
 
-let generatedCode=" ";
+ 
+  if(password !== confirmPassword){
+    alert("Passwords do not match");
+    return;
+  }
 
-getCodeB.addEventListener("click", function () {
+  if(!fullName || !email || !password || role === "Choose"){
+    alert("Please fill all required fields!");
+    return;
+  }
 
-    emailErr.textContent = "";
-    const email = emailInp.value.trim().toLowerCase();
+  if(!(email.endsWith(".edu") || email.endsWith(".edu.eg"))){
+    alert("Please use your university email (.edu or .edu.eg)");
+    return;
+  }
 
-    if (email === "") {
-        emailErr.textContent = "Please Enter Your Email";
-        return;
-    }
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    console.log("User registered:", user.email, fullName, role);
 
-   
-    if (!email.includes("@")) {
-        emailErr.textContent = "Invalid email format";
-        return;
-    }
-
-    const parts = email.split("@");
-
-    if (parts.length !== 2) {
-        emailErr.textContent = "Invalid email format";
-        return;
-    }
-
-    const domain = parts[1];
-
-    const blocked = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com"];
-
-    if (blocked.includes(domain)) {
-        emailErr.textContent = "Public emails are not allowed";
-        return;
-    }
-
-    if (!(domain.endsWith(".edu") || domain.endsWith(".edu.eg"))) {
-        emailErr.textContent = "Use university email (.edu)";
-        return;
-    }
-
-
-    generatedCode = "123456";
-    console.log("Verification Code:", generatedCode);
-
-    StepOne.classList.add("hidden");
-    StepTwo.classList.remove("hidden");
-    Title.classList.add("hidden");
+    alert("Registration Successful! You can login now.");
+    //window.location.href = "./LoginPage/LogIn.html";
+  } catch(error) {
+    alert(error.message);
+  }
 });
-
-
-verifyCodeB.addEventListener("click" ,function(){
-    codeErr.textContent=" ";
-    if(CodeInp.value===""){
-        codeErr.textContent="Please enter verification code";
-        return;
-    }
-    if(CodeInp.value!==generatedCode){
-        codeErr.textContent="Wrong verification code ";
-        return;
-    }
-    StepTwo.classList.add("hidden");
-    StepThree.classList.remove("hidden");
-    
-
-})
-
-resetPassB.addEventListener("click" ,function(){
-passErr.textContent="";
-succMsg.textContent="";
-if(passInp.value==="" || ConfPassInp.value===""){
-    passErr.textContent="Please Fill all Field";
-    return;
-}
-if(passInp.value!==ConfPassInp.value){
-    passErr.textContent="Password and Condirm Password not match";
-    
-    return;
-}
-StepThree.classList.add("hidden"); 
-    succMsg.textContent = "Password Reset successfully";
-   backLogin.classList.remove("hidden");
-     
-
-
-
-})
-
-
-
-
-
-
-
-
-
