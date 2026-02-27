@@ -3,8 +3,10 @@ import React, { useState } from "react";
 import { auth } from "../firebase.js"; 
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import "./Rigister.css";
+import { useNavigate } from "react-router-dom";
 
 export default function Register() {
+  const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,7 +39,7 @@ export default function Register() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       console.log("User registered:", user.email, fullName, role, role === "seller" ? sellerRole : buyerRole);
-      setSuccessMsg("Registration Successful! You can login now.");
+      navigate("/login");
 
       // reset form
       setFullName("");
