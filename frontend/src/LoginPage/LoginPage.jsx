@@ -17,8 +17,8 @@ function LoginPage() {
             await signInWithEmailAndPassword(auth, email, password);
             alert("Login Successful!");
             navigate("/");
-        } catch (error) {
-            setErrorMsg(`Invalid email or password ${error}`);
+        } catch  {
+            setErrorMsg(`Invalid email or password `);
         }
     };
 
