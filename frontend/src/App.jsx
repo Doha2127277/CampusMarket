@@ -1,3 +1,4 @@
+import AllRequests from './Admin/AllRequests';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LoginPage from './LoginPage/LoginPage';
 import Register from './RigsterPage/Rigster'; 
@@ -11,6 +12,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forget-password" element={<ForgetPassword />} />
+        <Route path="/all-requests" element={<AllRequests />} />
       </Routes>
     </Router>
   );
