@@ -1,8 +1,9 @@
 import { useState } from "react";
 import "./projectSoft.css";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../../firebase.js";
+import { auth, db } from "../../firebase.js";
 import bgImage from "./image copy 2.png";
+import {  collection, query, where, getDocs } from "firebase/firestore";
 
 export default function ForgetPassword() {
   const [step, setStep] = useState(1);
@@ -46,6 +47,17 @@ export default function ForgetPassword() {
     }
 
     try {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("email", "==", trimmedEmail));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        setEmailError("No account found with this email");
+        return;
+      }
+      const userDoc = querySnapshot.docs[0]; 
+      console.log("User data:", userDoc.data());
+
       await sendPasswordResetEmail(auth, trimmedEmail);
       setSuccessMsg("Reset link sent to your email ");
       setStep(2);
