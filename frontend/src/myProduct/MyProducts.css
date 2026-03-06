@@ -10,28 +10,30 @@
   text-align: center;
   margin-bottom: 25px;
   color: #333;
+  text-shadow: 1px 1px 2px #fff;
 }
 
 .my-products-container p.no-products {
   text-align: center;
   color: #777;
   font-size: 18px;
+  text-shadow: 1px 1px 2px #fff;
 }
 
 .product-card {
   display: flex;
   align-items: flex-start;
   gap: 15px;
-  border: 1px solid #ccc;
+  border: 1px solid rgba(255, 255, 255, 0.7);
   padding: 15px;
   margin-bottom: 15px;
   border-radius: 10px;
   transition: box-shadow 0.3s ease;
-  background-color: #fafafa;
+  background-color:rgba(255, 255, 255, 0.85);
 }
 
 .product-card:hover {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .product-card img {
@@ -52,7 +54,7 @@
 
 .product-details p {
   margin: 4px 0;
-  color: #555;
+  color: #333;
 }
 
 .product-details button {
@@ -68,4 +70,5 @@
 
 .product-details button:hover {
   background-color: #c0392b;
+
 }
