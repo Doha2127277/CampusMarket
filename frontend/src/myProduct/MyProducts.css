@@ -9,13 +9,13 @@
 .my-products-container h2 {
   text-align: center;
   margin-bottom: 25px;
-  color: #333;
+  color: #000000;
   text-shadow: 1px 1px 2px #fff;
 }
 
 .my-products-container p.no-products {
   text-align: center;
-  color: #777;
+  color: #473c3c;
   font-size: 18px;
   text-shadow: 1px 1px 2px #fff;
 }
@@ -37,10 +37,10 @@
 }
 
 .product-card img {
-  width: 120px;
-  height: 120px;
+  width: 0px;
+  height: 0px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 0px;
 }
 
 .product-details {
@@ -72,3 +72,4 @@
   background-color: #c0392b;
 
 }
+
