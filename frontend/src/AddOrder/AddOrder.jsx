@@ -25,7 +25,7 @@ function AddOrder() {
     const [description, setDescription] = useState("")
     const [category, setCategory] = useState("")
     const [type, setType] = useState("")
-    const [status, setStatus] = useState("")
+    const [mode, setMode] = useState("")
     const [price, setPrice] = useState("")
     const [photo, setPhoto] = useState(null)
 
@@ -48,8 +48,8 @@ function AddOrder() {
                 description,
                 category,
                 type,
-                status,
-                mode:"pending",
+                status:"pending",
+                mode,
                 price: Number(price),
                 userId: currentUser.uid,
                 photoURL,
@@ -65,7 +65,7 @@ function AddOrder() {
             setDescription("");
             setCategory("");
             setType("");
-            setStatus("");
+            setMode("");
             setPrice("");
             setPhoto(null);
 
@@ -111,8 +111,8 @@ function AddOrder() {
                     <option>Tools</option>
                 </select>
 
-                <select value={status} onChange={(e) => setStatus(e.target.value)} required>
-                    <option value="">Status</option>
+                <select value={mode} onChange={(e) => setMode(e.target.value)} required>
+                    <option value="">Mode</option>
                     <option>For Sale</option>
                     <option>Volunteer</option>
                 </select>
