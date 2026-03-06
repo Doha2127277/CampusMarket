@@ -1,58 +1,54 @@
 import { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { collection, query, where, getDocs, deleteDoc, doc } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom"; 
 import "./MyProducts.css";
 
 function MyProducts() {
-
   const [products, setProducts] = useState([]);
-   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  
+  const [loading, setLoading] = useState(true);
+  const [showLoginMessage, setShowLoginMessage] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
+      const currentUser = JSON.parse(localStorage.getItem("user"));
 
-    const currentUser = JSON.parse(localStorage.getItem("user"));
-
-    if (!currentUser) {
-      navigate("/login");
+      if (!currentUser) {
+    
+        setShowLoginMessage(true);
+        setLoading(false);
         return;
-      return;
-    }
+      }
 
-    try {
-      const q = query(
-        collection(db, "products"),
-        where("userId", "==", currentUser.uid)
-      );
+      try {
+        const q = query(
+          collection(db, "products"),
+          where("userId", "==", currentUser.uid)
+        );
 
-      const querySnapshot = await getDocs(q);
+        const querySnapshot = await getDocs(q);
+        const list = [];
 
-      const list = [];
-
-      querySnapshot.forEach((docItem) => {
-        list.push({
-          id: docItem.id,
-          ...docItem.data()
+        querySnapshot.forEach((docItem) => {
+          list.push({
+            id: docItem.id,
+            ...docItem.data()
+          });
         });
-      });
 
-      setProducts(list);
+        setProducts(list);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error loading products:", error);
+        setLoading(false);
+      }
+    };
 
-    } catch (error) {
-      console.error("Error loading products:", error);
-       setLoading(false);
-    }
-  };
     fetchProducts();
-  }, [navigate]);
+  }, []);
 
   const deleteProduct = async (id) => {
-
-  try {
+    try {
       await deleteDoc(doc(db, "products", id));
       setProducts(products.filter(p => p.id !== id));
     } catch (error) {
@@ -62,6 +58,19 @@ function MyProducts() {
 
   if (loading) {
     return <p style={{ padding: "20px" }}>Loading products...</p>;
+  }
+
+  if (showLoginMessage) {
+    return (
+      <div style={{ padding: "20px", textAlign: "center" }}>
+        <p style={{ color: "red", fontWeight: "bold" }}>
+          Please login first!
+        </p>
+        <Link to="/login" style={{ color: "blue", textDecoration: "underline" }}>
+          Go to Login
+        </Link>
+      </div>
+    );
   }
 
   if (products.length === 0) {
@@ -88,7 +97,4 @@ function MyProducts() {
   );
 }
 
-export default MyProducts;
-
-       
 export default MyProducts;
