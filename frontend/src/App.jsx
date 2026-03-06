@@ -4,6 +4,7 @@ import LoginPage from './LoginPage/LoginPage';
 import Register from './RigsterPage/Rigster'; 
 import ForgetPassword from './pages/forgetPass/ForgetPassword';
 import AddOrder from './AddOrder/AddOrder';
+import MyProducts from "./MyProducts";
 function App() {
   return (
     <Router>
@@ -14,6 +15,7 @@ function App() {
         <Route path="/forget-password" element={<ForgetPassword />} />
         <Route path="/all-requests" element={<AllRequests />} />
         <Route path="/add-product" element={<AddOrder />} />
+        <Route path="/myproducts" element={<MyProducts />} />
       </Routes>
     </Router>
   );
