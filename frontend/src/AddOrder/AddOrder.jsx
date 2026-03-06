@@ -1,92 +1,140 @@
 import { useState } from "react";
 import "./AddOrder.css";
+import { db } from "../firebase.js";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+const uploadToCloudinary = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "CampusMarket");
+    formData.append("folder", "CampusMarket");
 
+    const res = await fetch(
+        "https://api.cloudinary.com/v1_1/dmzp7e6zb/image/upload",
+        {
+            method: "POST",
+            body: formData
+        }
+    );
+
+    const data = await res.json();
+    return data.secure_url;
+};
 function AddOrder() {
 
-const [name,setName] = useState("")
-const [description,setDescription] = useState("")
-const [category,setCategory] = useState("")
-const [type,setType] = useState("")
-const [status,setStatus] = useState("")
-const [price,setPrice] = useState("")
-const [photo,setPhoto] = useState("")
-const addOrder = (e) => {
-e.preventDefault()
+    const [name, setName] = useState("")
+    const [description, setDescription] = useState("")
+    const [category, setCategory] = useState("")
+    const [type, setType] = useState("")
+    const [status, setStatus] = useState("")
+    const [price, setPrice] = useState("")
+    const [photo, setPhoto] = useState(null)
 
-const order = {
-name,
-description,
-category,
-type,
-status,
-price
-}
+    const addOrder = async (e) => {
+        e.preventDefault()
+        const currentUser = JSON.parse(localStorage.getItem("user"));
+        if (!currentUser) {
+            alert("Please login first");
+            return;
+        }
 
-console.log(order)
+        try {
+            let photoURL = "";
+            if (photo) {
+                photoURL = await uploadToCloudinary(photo);
+                console.log("Photo URL:", photoURL);
+            }
+            const order = {
+                name,
+                description,
+                category,
+                type,
+                status,
+                price: Number(price),
+                userId: currentUser.uid,
+                photoURL,
+                createdAt: serverTimestamp()
+            };
 
-alert("Order Added")
+            await addDoc(collection(db, "products"), order);
 
-}
+            alert("Product added successfully!");
 
-return(
+            // Reset form
+            setName("");
+            setDescription("");
+            setCategory("");
+            setType("");
+            setStatus("");
+            setPrice("");
+            setPhoto(null);
 
-<div className="container">
+        } catch (error) {
+            console.error("Error adding product:", error);
+            alert("Error adding product");
+        }
 
-<h2>Add Product </h2>
 
-<form onSubmit={addOrder}>
 
-<input
-placeholder="Product Name"
-value={name}
-onChange={(e)=>setName(e.target.value) }
-required/>
+    };
 
-<textarea
-placeholder="AddDescription"
-value={description}
-onChange={(e)=>setDescription(e.target.value)}
- required></textarea>
+    return (
 
-<select onChange={(e)=>setCategory(e.target.value)} required>
-<option>Category</option>
-<option>Engineering</option>
-<option>Medicine</option>
-<option>Business</option>
-</select>
+        <div className="container">
 
-<select onChange={(e)=>setType(e.target.value)} required>
-<option>Type</option>
-<option>Book</option>
-<option>Tools</option>
-</select>
+            <h2>Add Product </h2>
 
-<select onChange={(e)=>setStatus(e.target.value)} required>
-<option>Status</option>
-<option>For Sale</option>
-<option>Volunteer</option>
-</select>
+            <form onSubmit={addOrder}>
 
-<input
-type="number"
-placeholder="Price"
-onChange={(e)=>setPrice(e.target.value)}
- required/>
-<label color="black"> Add Photo of product</label>
-<input
-type="file"
-accept="image/*"
-onChange={(e)=>setPhoto(e.target.files[0])}
-required
-/>
+                <input
+                    placeholder="Product Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required />
 
-<button type="submit">Add Order</button>
+                <textarea
+                    placeholder="AddDescription"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    required></textarea>
 
-</form>
+                <select value={category} onChange={(e) => setCategory(e.target.value)} required>
+                    <option value="">Category</option>
+                    <option>Engineering</option>
+                    <option>Medicine</option>
+                    <option>Business</option>
+                </select>
 
-</div>
+                <select value={type} onChange={(e) => setType(e.target.value)} required>
+                    <option value="">Type</option>
+                    <option>Book</option>
+                    <option>Tools</option>
+                </select>
 
-)
+                <select value={status} onChange={(e) => setStatus(e.target.value)} required>
+                    <option value="">Status</option>
+                    <option>For Sale</option>
+                    <option>Volunteer</option>
+                </select>
+
+                <input
+                    type="number"
+                    placeholder="Price" value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    required />
+                <label color="black"> Add Photo of product</label>
+                <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setPhoto(e.target.files[0])}
+                />
+
+                <button type="submit" > Add Order</button>
+
+            </form>
+
+        </div>
+
+    )
 
 }
 
