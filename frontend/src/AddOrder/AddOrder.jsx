@@ -49,6 +49,7 @@ function AddOrder() {
                 category,
                 type,
                 status,
+                mode:"pending",
                 price: Number(price),
                 userId: currentUser.uid,
                 photoURL,
