@@ -6,7 +6,10 @@ function MyProducts() {
 
   const [products, setProducts] = useState([]);
 
-  const fetchProducts = async () => {
+  
+
+  useEffect(() => {
+    const fetchProducts = async () => {
 
     const currentUser = JSON.parse(localStorage.getItem("user"));
 
@@ -38,8 +41,6 @@ function MyProducts() {
       console.error("Error loading products:", error);
     }
   };
-
-  useEffect(() => {
     fetchProducts();
   }, []);
 
@@ -49,7 +50,7 @@ function MyProducts() {
 
       await deleteDoc(doc(db, "products", id));
 
-      fetchProducts();
+       setProducts(products.filter(p => p.id !== id));
 
     } catch (error) {
       console.error("Error deleting product:", error);
