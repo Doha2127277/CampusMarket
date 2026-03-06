@@ -1,4 +1,7 @@
 
+body{
+  background-image: url(#07259);
+}
 .my-products-container {
   padding: 20px;
   max-width: 900px;
@@ -72,4 +75,5 @@
   background-color: #c0392b;
 
 }
+
 
