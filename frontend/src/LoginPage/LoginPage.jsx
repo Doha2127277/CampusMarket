@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { auth, db } from "../firebase.js";
+import { auth } from "../firebase.js";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
 import './LogIn.css';
 
 function LoginPage() {
@@ -14,36 +13,12 @@ function LoginPage() {
     const handleLogin = async (e) => {
         e.preventDefault();
         setErrorMsg("");
-        if (!(email.endsWith(".edu") || email.endsWith(".edu.eg"))) {
-            setErrorMsg("Please use your university email (.edu or .edu.eg)");
-            return;
-        }
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-            const userDoc = await getDoc(doc(db, "users", user.uid));
-            if (!userDoc.exists()) {
-                setErrorMsg("User data not found in Firestore");
-                return;
-            }
-            const userData = userDoc.data();
-
-            // حفظ البيانات المهمة في Local Storage
-            localStorage.setItem("user", JSON.stringify({
-                uid: user.uid,
-                email: user.email,
-                fullName: userData.fullName,
-                role: userData.role
-            }));
-
+            await signInWithEmailAndPassword(auth, email, password);
             alert("Login Successful!");
             navigate("/");
-        } catch (error) {
-            if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
-                setErrorMsg("Invalid email or password");
-            } else {
-                setErrorMsg(error.message);
-            }
+        } catch {
+            setErrorMsg(`Invalid email or password`);
         }
     };
 
