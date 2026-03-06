@@ -3,24 +3,27 @@ body{
   background-image: url(#07259);
 }
 .my-products-container {
-  padding: 20px;
-  max-width: 900px;
-  margin: 0 auto;
-  font-family: Arial, sans-serif;
+  width:400px;
+height: 600px;
+margin:auto;
+margin-top:50px;
+background-color: rgba(255,255,255,0.85);
+border: 2px solid rgb(165, 12, 12);
+border-radius: 10%;
+box-shadow: 0 0 15px rgba(0,0,0,.2);
+padding: 20px;
 }
 
 .my-products-container h2 {
-  text-align: center;
-  margin-bottom: 25px;
-  color: #000000;
-  text-shadow: 1px 1px 2px #fff;
+  color:black;
+text-align:center;
 }
 
 .my-products-container p.no-products {
   text-align: center;
-  color: #473c3c;
+  color: #554040;
   font-size: 18px;
-  text-shadow: 1px 1px 2px #fff;
+  text-shadow: 1px 1px 2px #ffffff;
 }
 
 .product-card {
@@ -75,5 +78,3 @@ body{
   background-color: #c0392b;
 
 }
-
-
