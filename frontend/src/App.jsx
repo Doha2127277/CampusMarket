@@ -4,7 +4,7 @@ import LoginPage from './LoginPage/LoginPage';
 import Register from './RigsterPage/Rigster'; 
 import ForgetPassword from './pages/forgetPass/ForgetPassword';
 import AddOrder from './AddOrder/AddOrder';
-import MyProducts from "./MyProducts";
+import MyProducts from "./myProduct/myProducts";
 function App() {
   return (
     <Router>
