@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { collection, query, where, getDocs, deleteDoc, doc } from "firebase/firestore";
+import "./MyProducts.css";
 
 function MyProducts() {
 
