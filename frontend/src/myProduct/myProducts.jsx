@@ -10,13 +10,15 @@ function MyProducts() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (!user) {
-        alert("Please login first");
-        navigate("/login");
-        return;
-      }
+    const user = auth.currentUser;
 
+    if (!user) {
+      alert("Please login first");
+      navigate("/login");
+      return;
+    }
+
+    const fetchProducts = async () => {
       try {
         const q = query(
           collection(db, "products"),
@@ -30,11 +32,12 @@ function MyProducts() {
         setProducts(list);
       } catch (error) {
         console.error("Error loading products:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    };
 
-    return () => unsubscribe();
+    fetchProducts();
   }, [navigate]);
 
   const deleteProduct = async (id) => {
@@ -77,5 +80,5 @@ function MyProducts() {
     </div>
   );
 }
-/////
+
 export default MyProducts;
