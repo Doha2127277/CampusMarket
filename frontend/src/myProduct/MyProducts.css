@@ -1,17 +1,22 @@
 
 body{
-  background-image: url(#07259);
+ background-image: url("background.jpg");
+background-size: cover;
+background-position: center;
+ overflow-y: auto;
+
 }
 .my-products-container {
   width:400px;
-height: 600px;
-margin:auto;
-margin-top:50px;
-background-color: rgba(255,255,255,0.85);
-border: 2px solid rgb(165, 12, 12);
-border-radius: 10%;
-box-shadow: 0 0 15px rgba(0,0,0,.2);
-padding: 20px;
+  height:600px;
+  margin:auto;
+  margin-top:50px;
+  background-color: rgba(255,255,255,0.85);
+  border: 2px solid rgb(165, 12, 12);
+  border-radius: 10%;
+  box-shadow: 0 0 15px rgba(0,0,0,.2);
+  padding: 20px;
+  overflow-y: auto;
 }
 
 .my-products-container h2 {
@@ -30,24 +35,18 @@ text-align:center;
   display: flex;
   align-items: flex-start;
   gap: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0,0,0,0.2);
   padding: 15px;
   margin-bottom: 15px;
   border-radius: 10px;
+  background-color: rgba(255,255,255,0.9);
   transition: box-shadow 0.3s ease;
-  background-color:rgba(255, 255, 255, 0.85);
 }
 
 .product-card:hover {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
-.product-card img {
-  width: 0px;
-  height: 0px;
-  object-fit: cover;
-  border-radius: 0px;
-}
 
 .product-details {
   flex: 1;
@@ -77,4 +76,10 @@ text-align:center;
 .product-details button:hover {
   background-color: #c0392b;
 
+}
+.product-img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover; 
+  border-radius: 8px; /* اختياري، يخلي الزوايا مدورة */
 }

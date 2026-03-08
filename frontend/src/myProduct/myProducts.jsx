@@ -58,22 +58,18 @@ function MyProducts() {
         <p>No products added yet.</p>
       ) : (
         products.map((product) => (
-          <div
-            key={product.id}
-            style={{
-              border: "1px solid #ccc",
-              padding: "15px",
-              marginBottom: "10px",
-              borderRadius: "8px",
-            }}
-          >
-            {product.photoURL && <img src={product.photoURL} alt={product.name} width="120" />}
-            <h3>{product.name}</h3>
-            <p>{product.description}</p>
-            <p>Category: {product.category}</p>
-            <p>Price: {product.price}</p>
-            <p>Status: {product.status}</p>
-            <button onClick={() => deleteProduct(product.id)}>Delete</button>
+          <div key={product.id} className="product-card">
+           {product.photoURL && (
+  <img className="product-img" src={product.photoURL} alt={product.name} />
+)}
+            <div className="product-details">
+  <h3>{product.name}</h3>
+  <p>{product.description}</p>
+  <p>Category: {product.category}</p>
+  <p>Price: {product.price}</p>
+  <p>Status: {product.status}</p>
+  <button onClick={() => deleteProduct(product.id)}>Delete</button>
+</div>
           </div>
         ))
       )}

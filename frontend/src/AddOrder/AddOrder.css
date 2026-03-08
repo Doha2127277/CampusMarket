@@ -1,3 +1,4 @@
+
 body {
   background-image: url(./image.png);
   background-size: cover;
@@ -5,8 +6,8 @@ body {
   background-repeat: no-repeat;
 
 }
-
-.container {
+  
+.container1 {
 
   width: 400px;
   height: 600px;
