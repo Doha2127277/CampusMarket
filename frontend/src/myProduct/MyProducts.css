@@ -1,85 +1,173 @@
-
-body{
- background-image: url("background.jpg");
-background-size: cover;
-background-position: center;
- overflow-y: auto;
-
-}
-.my-products-container {
-  width:400px;
-  height:600px;
-  margin:auto;
-  margin-top:50px;
-  background-color: rgba(255,255,255,0.85);
-  border: 2px solid rgb(165, 12, 12);
-  border-radius: 10%;
-  box-shadow: 0 0 15px rgba(0,0,0,.2);
-  padding: 20px;
+body {
+  background-image: none !important;
+  background-color: #ffffff !important;
+  margin: 0;
+  padding: 0;
   overflow-y: auto;
 }
 
-.my-products-container h2 {
-  color:black;
-text-align:center;
+.my-products-page {
+  padding: 40px 5%;
+  background-color: #ffffff;
+  min-height: 100vh;
 }
 
-.my-products-container p.no-products {
+.page-title {
   text-align: center;
-  color: #554040;
-  font-size: 18px;
-  text-shadow: 1px 1px 2px #ffffff;
+  color: #1a1a1a;
+  margin-bottom: 40px;
+  font-size: 2.2rem;
+  font-weight: bold;
 }
 
-.product-card {
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.product-item-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  transition: transform 0.3s ease;
   display: flex;
-  align-items: flex-start;
-  gap: 15px;
-  border: 1px solid rgba(0,0,0,0.2);
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 10px;
-  background-color: rgba(255,255,255,0.9);
-  transition: box-shadow 0.3s ease;
+  flex-direction: column;
 }
 
-.product-card:hover {
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+.product-item-card:hover {
+  transform: translateY(-5px);
 }
 
+.img-container {
+  width: 100%;
+  height: 200px;
+  background-color: #f8fafc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  box-sizing: border-box;
+}
 
-.product-details {
+.img-container img {
+  max-width: 0%;
+  max-height: 0%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.item-details {
+  padding: 20px;
+  text-align: center;
+}
+
+.item-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.item-price {
+  color: #2563eb;
+  font-weight: 800;
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+}
+
+.item-meta {
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.type-tag {
+  color: #4b5563;
+  font-weight: 600;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.item-category {
+  color: #6b7280;
+}
+
+.status-box {
+  margin: 10px 0;
+  font-size: 0.9rem;
+}
+
+.status-badge {
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.status-verified { color: #10b981; background-color: #e6f7ef; }
+.status-rejected { color: #ef4444; background-color: #fee2e2; }
+.status-pending { color: #f59e0b; background-color: #fef3c7; }
+
+.item-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-edit, .btn-delete {
   flex: 1;
-}
-
-.product-details h3 {
-  margin: 0 0 8px 0;
-  color: #222;
-}
-
-.product-details p {
-  margin: 4px 0;
-  color: #333;
-}
-
-.product-details button {
-  margin-top: 10px;
-  padding: 8px 14px;
-  background-color: #e74c3c;
+  padding: 10px;
   border: none;
-  border-radius: 6px;
-  color: white;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  font-weight: 600;
+  color: white;
 }
 
-.product-details button:hover {
-  background-color: #c0392b;
+.btn-edit { background-color: #2563eb; }
+.btn-delete { background-color: #ef4444; }
 
+/* Modal Styles */
+.edit-modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
-.product-img {
-  width: 120px;
-  height: 120px;
-  object-fit: cover; 
-  border-radius: 8px; /* اختياري، يخلي الزوايا مدورة */
+
+.edit-modal-content {
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 400px;
 }
+
+.edit-modal-content form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.edit-modal-content input, .edit-modal-content select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.save-btn { background: #2ecc71; color: white; border: none; padding: 12px; border-radius: 8px; flex: 2; cursor: pointer; font-weight: bold; }
+.cancel-btn { background: #e74c3c; color: white; border: none; padding: 12px; border-radius: 8px; flex: 1; cursor: pointer; }
