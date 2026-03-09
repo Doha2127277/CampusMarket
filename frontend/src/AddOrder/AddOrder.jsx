@@ -1,6 +1,8 @@
 import { useState } from "react";
 import "./AddOrder.css";
 import { db } from "../firebase.js";
+import { auth } from "../firebase";
+import { useNavigate } from "react-router-dom";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 const uploadToCloudinary = async (file) => {
     const formData = new FormData();
@@ -28,14 +30,16 @@ function AddOrder() {
     const [mode, setMode] = useState("")
     const [price, setPrice] = useState("")
     const [photo, setPhoto] = useState(null)
+    const navigate = useNavigate();
 
     const addOrder = async (e) => {
         e.preventDefault()
-        const currentUser = JSON.parse(localStorage.getItem("user"));
-        if (!currentUser) {
-            alert("Please login first");
-            return;
-        }
+        const currentUser = auth.currentUser;
+       if (!currentUser) {
+    alert("Please login first");
+navigate("/login");   
+ return;
+}
 
         try {
             let photoURL = "";
@@ -129,7 +133,7 @@ function AddOrder() {
                     onChange={(e) => setPhoto(e.target.files[0])}
                 />
 
-                <button type="submit" > Add Order</button>
+                <button type="submit"> Add Product</button>
 
             </form>
 

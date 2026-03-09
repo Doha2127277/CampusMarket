@@ -16,7 +16,7 @@ function LoginPage() {
         try {
             await signInWithEmailAndPassword(auth, email, password);
             alert("Login Successful!");
-            navigate("/");
+            navigate("/home"); 
         } catch {
             setErrorMsg(`Invalid email or password`);
         }
