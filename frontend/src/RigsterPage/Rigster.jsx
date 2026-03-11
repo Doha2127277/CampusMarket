@@ -56,7 +56,7 @@ export default function Register() {
       // setSellerRole("Choose");
       // setBuyerRole("Choose");
     } catch (error) {
-      setErrorMsg(error.message);
+      setErrorMsg("this email already in use");
     }
   };
 

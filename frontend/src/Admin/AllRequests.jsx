@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { db, auth } from "../firebase"; 
+import { db, auth } from "../firebase";
 import { collection, query, where, onSnapshot, updateDoc, doc, getDoc } from "firebase/firestore";
 import './AllRequests.css';
 
@@ -51,7 +51,7 @@ const AllRequests = () => {
                 if (req.userId && !names[req.userId]) {
                     const userDoc = await getDoc(doc(db, "users", req.userId));
                     if (userDoc.exists()) {
-                        names[req.userId] = userDoc.data().fullName || userDoc.data().name;
+                        names[req.userId] = userDoc.data().fullName;
                     }
                 }
             }
