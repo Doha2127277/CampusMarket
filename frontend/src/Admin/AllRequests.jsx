@@ -69,16 +69,14 @@ const AllRequests = () => {
         }
     };
 
-    if (verifying) {
-        return <div className="admin-container"><p className="status-text">Verifying Admin Access...</p></div>;
-    }
+    if (verifying) return <div className="admin-container"><p className="status-text">Verifying Access...</p></div>;
 
     if (!isAdmin) {
         return (
             <div className="admin-container">
-                <div style={{ textAlign: 'center', marginTop: '50px', color: 'red' }}>
-                    <h2>🚫 Access Denied</h2>
-                    <p>This dashboard is for authorized administrators only.</p>
+                <div style={{ textAlign: 'center', marginTop: '100px' }}>
+                    <h2 style={{ color: '#ef4444' }}>Access Denied</h2>
+                    <p>Administrators only.</p>
                 </div>
             </div>
         );
@@ -87,29 +85,46 @@ const AllRequests = () => {
     return (
         <div className="admin-container">
             <header className="admin-header">
-                <h1 className="admin-title">Admin Dashboard - Market Requests</h1>
+                <h1 className="admin-title">Marketplace Requests</h1>
             </header>
 
             {loading ? (
-                <p className="status-text">Loading items...</p>
+                <p className="status-text">Loading...</p>
             ) : (
-                <div className="requests-grid">
+                <div className="requests-list">
                     {requests.map((req) => (
-                        <div key={req.id} className="request-card">
-                            <div className="card-content">
-                                <h3>{req.name}</h3>
-                                <p><strong>Description:</strong> {req.description}</p>
-                                <p><strong>Category:</strong> {req.category}</p>
-                                <p><strong>Price:</strong> {req.price} EGP</p>
-                                <p><strong>Seller:</strong> {userNames[req.userId] || "Loading..."}</p>
-                                <div className="button-group">
-                                    <button onClick={() => handleStatus(req.id, "approved")} className="btn-approve">Approve</button>
-                                    <button onClick={() => handleStatus(req.id, "rejected")} className="btn-reject">Reject</button>
+                        <div key={req.id} className="request-row">
+                            <div className="request-info">
+                                <div className="product-name">{req.name}</div>
+                                
+                                <div className="info-group">
+                                    <span className="info-label">Description</span>
+                                    <span className="info-value">{req.description}</span>
                                 </div>
+
+                                <div className="info-group">
+                                    <span className="info-label">Category</span>
+                                    <span className="info-value">{req.category}</span>
+                                </div>
+
+                                <div className="info-group">
+                                    <span className="info-label">Price</span>
+                                    <span className="info-value">{req.price} EGP</span>
+                                </div>
+
+                                <div className="info-group">
+                                    <span className="info-label">Seller</span>
+                                    <span className="info-value">{userNames[req.userId] || "..."}</span>
+                                </div>
+                            </div>
+
+                            <div className="button-group">
+                                <button onClick={() => handleStatus(req.id, "approved")} className="btn-approve">Approve</button>
+                                <button onClick={() => handleStatus(req.id, "rejected")} className="btn-reject">Reject</button>
                             </div>
                         </div>
                     ))}
-                    {requests.length === 0 && <p className="status-text">No pending requests.</p>}
+                    {requests.length === 0 && <p className="status-text">No pending requests found.</p>}
                 </div>
             )}
         </div>

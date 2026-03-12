@@ -1,99 +1,121 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #f8fafc; /* Light grayish-blue background for the page */
+}
+
 .admin-container {
-    padding: 40px 20px;
-    background-color: #f4f7f6;
+    width: 100vw;
     min-height: 100vh;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 40px 0;
+    font-family: 'Inter', sans-serif;
 }
 
 .admin-header {
-    text-align: center;
-    margin-bottom: 40px;
+    width: 90%;
+    max-width: 1400px;
+    margin: 0 auto 40px auto;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 20px;
 }
 
 .admin-title {
-    color: #2c3e50;
-    font-size: 2rem;
-    margin-bottom: 10px;
+    color: #1e293b;
+    font-size: 28px;
+    font-weight: 800;
+    margin: 0;
 }
 
-.admin-subtitle {
-    color: #7f8c8d;
-}
-
-.error-message {
-    text-align: center;
-    color: #e74c3c;
-    margin-top: 50px;
-}
-
-.requests-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 25px;
-    max-width: 1200px;
+.requests-list {
+    width: 90%;
+    max-width: 1400px;
     margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
 }
 
-.request-card {
-    background: white;
-    padding: 25px;
+.request-row {
+    background: #ffffff;
+    /* Light blue border on the left to match the logo */
+    border-left: 5px solid #38bdf8; 
+    padding: 20px 30px;
     border-radius: 12px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-    border: 1px solid #eee;
-    transition: transform 0.3s ease;
-}
-
-.request-card:hover {
-    transform: translateY(-5px);
-}
-
-.card-header {
+    /* Soft shadow for depth */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid #f9f9f9;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
+    transition: all 0.3s ease;
 }
 
-.badge {
-    padding: 5px 12px;
-    border-radius: 50px;
+.request-row:hover {
+    /* Very light blue tint on hover */
+    background: #f0f9ff; 
+    transform: translateX(5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.request-info {
+    display: flex;
+    gap: 45px;
+    align-items: center;
+    flex: 1;
+}
+
+.product-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2563eb; /* Match the primary blue */
+    min-width: 150px;
+}
+
+.info-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-label {
     font-size: 11px;
+    color: #94a3b8;
     text-transform: uppercase;
-    font-weight: bold;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
 }
 
-.badge-donation { background-color: #e8f5e9; color: #2e7d32; }
-.badge-sale { background-color: #e3f2fd; color: #1565c0; }
-
-.description { font-size: 14px; color: #555; line-height: 1.5; }
-.price { font-size: 14px; color: #2c3e50; margin-top: 10px; }
+.info-value {
+    font-size: 14px;
+    color: #334155;
+    font-weight: 600;
+}
 
 .button-group {
     display: flex;
     gap: 12px;
-    margin-top: 25px;
 }
 
-.btn-approve, .btn-reject {
-    flex: 1;
-    padding: 12px;
+.btn-approve {
+    background-color: #10b981;
+    color: white;
     border: none;
+    padding: 10px 22px;
     border-radius: 8px;
+    font-weight: 700;
     cursor: pointer;
-    font-weight: 600;
-    transition: opacity 0.2s;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
 }
 
-.btn-approve { background-color: #2ecc71; color: white; }
-.btn-reject { background-color: #e74c3c; color: white; }
-
-.btn-approve:hover, .btn-reject:hover { opacity: 0.85; }
-
-.status-text, .empty-state {
-    text-align: center;
-    font-size: 18px;
-    color: #95a5a6;
-    margin-top: 100px;
+.btn-reject {
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
 }
+
+.btn-approve:hover { background-color: #059669; }
+.btn-reject:hover { background-color: #dc2626; }
