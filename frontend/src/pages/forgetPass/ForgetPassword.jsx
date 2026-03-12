@@ -1,9 +1,9 @@
 import { useState } from "react";
-import "./projectSoft.css";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth, db } from "../../firebase.js";
-import bgImage from "./image copy 2.png";
-import {  collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { Link } from "react-router-dom";
+import "./ForgetPassword.css";
 
 export default function ForgetPassword() {
   const [step, setStep] = useState(1);
@@ -14,7 +14,6 @@ export default function ForgetPassword() {
   const handleSendCode = async () => {
     setEmailError("");
     setSuccessMsg("");
-
     const trimmedEmail = email.trim().toLowerCase();
 
     if (!trimmedEmail) {
@@ -22,27 +21,8 @@ export default function ForgetPassword() {
       return;
     }
 
-    if (!trimmedEmail.includes("@")) {
-      setEmailError("Invalid email format");
-      return;
-    }
-
-    const parts = trimmedEmail.split("@");
-    if (parts.length !== 2) {
-      setEmailError("Invalid email format");
-      return;
-    }
-
-    const domain = parts[1];
-    const blocked = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com"];
-
-    if (blocked.includes(domain)) {
-      setEmailError("Public emails are not allowed");
-      return;
-    }
-
-    if (!(domain.endsWith(".edu") || domain.endsWith(".edu.eg"))) {
-      setEmailError("Use university email (.edu)");
+    if (!(trimmedEmail.endsWith(".edu") || trimmedEmail.endsWith(".edu.eg"))) {
+      setEmailError("Please use your university email (.edu.eg)");
       return;
     }
 
@@ -55,41 +35,57 @@ export default function ForgetPassword() {
         setEmailError("No account found with this email");
         return;
       }
-      const userDoc = querySnapshot.docs[0]; 
-      console.log("User data:", userDoc.data());
 
       await sendPasswordResetEmail(auth, trimmedEmail);
-      setSuccessMsg("Reset link sent to your email ");
+      setSuccessMsg("A reset link has been sent to your university email.");
       setStep(2);
-    } catch (error) {
-      setEmailError(error.message);
+    } catch {
+      setEmailError("Something went wrong. Please try again later.");
     }
   };
 
   return (
-    <div>
-      <img src={bgImage} alt="" />
-      <div className="forgetPass">
+    <div className="forget-page">
+      <div className="forget-card">
+        <h2>Reset Password</h2>
+        
         {step === 1 && (
           <>
             <p>
-              <b>Please Enter university email and we will send you a reset link.</b>
+              Enter your university email address and we'll send you a link to reset your password.
             </p>
-            <input
-              type="email"
-              placeholder="example@university.edu"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <p className="error">{emailError}</p>
-            <button onClick={handleSendCode}>Get Reset Link</button>
+            
+            <div className="input-group">
+              <input
+                type="email"
+                placeholder="name@std.sci.cu.edu.eg"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            {emailError && <div className="error-text">{emailError}</div>}
+            
+            <button onClick={handleSendCode} className="action-btn">
+              Send Reset Link
+            </button>
+            
+            <Link to="/login" className="back-link">
+              Back to Login
+            </Link>
           </>
         )}
 
         {step === 2 && (
           <>
-            <p className="success">{successMsg}</p>
-            <a href="/">Back to Login</a>
+            <div className="success-text">{successMsg}</div>
+            <p style={{ marginTop: '20px' }}>
+              Please check your inbox and follow the instructions to recover your account.
+            </p>
+            <Link to="/login" className="back-link">
+              Return to Login Page
+            </Link>
           </>
         )}
       </div>

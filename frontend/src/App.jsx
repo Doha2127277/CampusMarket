@@ -9,7 +9,6 @@ import AllRequests from './Admin/AllRequests.jsx';
 
 function App() {
   const role = "Admin";
-
   return (
     <Router>
       <Routes>
