@@ -15,10 +15,9 @@ function LoginPage() {
         setErrorMsg("");
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            alert("Login Successful!");
             navigate("/home"); 
-        } catch {
-            setErrorMsg(`Invalid email or password`);
+        } catch{
+            setErrorMsg("Invalid email or password. Please try again.");
         }
     };
 
@@ -26,17 +25,21 @@ function LoginPage() {
         <div className="container">
             <div className="card">
                 <h1>Login to Campus Market</h1>
+                
+                {errorMsg && <div className="error-text">{errorMsg}</div>}
+
                 <form onSubmit={handleLogin}>
                     <div className="input-group">
-                        <label>Email</label>
+                        <label>Email Address</label>
                         <input
                             type="email"
-                            placeholder="Enter university email"
+                            placeholder="e.g. name@std.sci.cu.edu.eg"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
                         />
                     </div>
+
                     <div className="input-group">
                         <label>Password</label>
                         <input
@@ -47,13 +50,13 @@ function LoginPage() {
                             required
                         />
                     </div>
-                    {errorMsg && <p style={{ color: 'red', fontSize: '14px' }}>{errorMsg}</p>}
+
                     <button type="submit" className="login-btn">Login</button>
                 </form>
 
                 <div className="links">
                     <Link to="/forget-password">Forgot Password?</Link>
-                    <Link to="/register">Create an Account</Link>
+                    <Link to="/register">Don't have an account? Create one</Link>
                 </div>
             </div>
         </div>
