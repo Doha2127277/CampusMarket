@@ -55,29 +55,49 @@ export default function Register() {
       // setRole("Choose");
       // setSellerRole("Choose");
       // setBuyerRole("Choose");
-    } catch (error) {
+    } catch {
       setErrorMsg("this email already in use");
     }
   };
 
   return (
-    <div className="form-container">
-      <h2>Campus Market and Volunteer</h2>
-      <form onSubmit={handleSubmit}>
-        <input placeholder="Full Name" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-        <br />
-        <input placeholder="Email address" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <br />
-        <input placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <br />
-        <input placeholder="Confirm Password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-        <br />
+    <div className="register-page">
+      <div className="form-container">
+        <h2>Campus Market</h2>
+        <p className="subtitle">Join our university community today</p>
 
-        {errorMsg && <p className="error">{errorMsg}</p>}
-        {successMsg && <p className="success">{successMsg}</p>}
+        <form onSubmit={handleSubmit}>
+          <input
+            placeholder="Full Name"
+            type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+          />
+          <input
+            placeholder="University Email (.edu.eg)"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <input
+            placeholder="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <input
+            placeholder="Confirm Password"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
 
-        <button type="submit">Register</button>
-      </form>
+          {errorMsg && <p className="error">{errorMsg}</p>}
+          {successMsg && <p className="success">{successMsg}</p>}
+
+          <button type="submit">Create Account</button>
+        </form>
+      </div>
     </div>
   );
 }
