@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { auth } from "../firebase.js";
+import { auth, db } from "../firebase.js";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import { Link, useNavigate } from "react-router-dom";
 import './LogIn.css';
 
-function LoginPage() {
+function LoginPage({ setRole }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMsg, setErrorMsg] = useState("");
@@ -14,9 +15,20 @@ function LoginPage() {
         e.preventDefault();
         setErrorMsg("");
         try {
-            await signInWithEmailAndPassword(auth, email, password);
-            navigate("/home"); 
-        } catch{
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            const userDocRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userDocRef);
+
+            if (userDoc.exists()) {
+                const userRole = userDoc.data().role;
+                setRole(userRole);
+                navigate("/home"); 
+            } else {
+                setErrorMsg("User data not found.");
+            }
+        } catch {
             setErrorMsg("Invalid email or password. Please try again.");
         }
     };
