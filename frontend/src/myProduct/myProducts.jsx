@@ -105,6 +105,7 @@ function MyProducts() {
 
   return (
     <div className="my-products-page">
+      
       <h2 className="page-title">My Products</h2>
       <div className="products-grid">
         {products.length === 0 ? (

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import bgImage from './image.png';
 import "./AddOrder.css";
 import { db } from "../firebase.js";
 import { auth } from "../firebase";
@@ -83,7 +84,9 @@ navigate("/login");
     };
 
     return (
-
+    <div className="addproduct-wrapper">
+ <img src={bgImage} className="background-image" alt="background" />
+        
         <div className="container1">
 
             <h2>Add Product </h2>
@@ -129,7 +132,7 @@ navigate("/login");
                 <label color="black"> Add Photo of product</label>
                 <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*" required
                     onChange={(e) => setPhoto(e.target.files[0])}
                 />
 
@@ -137,6 +140,8 @@ navigate("/login");
 
             </form>
 
+        </div>
+        
         </div>
 
     )

@@ -42,7 +42,7 @@
 
 .search-navbar span {
   position: absolute;
-  left: 10px;
+  left: 20px;
   color: #94a3b8;
 }
 
@@ -52,7 +52,7 @@
   color: white;
   padding: 0.5rem 1rem 0.5rem 2.5rem;
   border-radius: 8px;
-  width: 250px;
+  width: 500px;
   outline: none;
 }
 

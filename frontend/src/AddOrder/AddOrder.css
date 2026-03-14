@@ -1,61 +1,191 @@
 
 body {
-  background-image: url(./image.png);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  min-height: 100vh;
 }
-  
+.background-image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100vw;        
+  height: 100vh;       
+  object-fit: cover;  
+  opacity: 0.2;       
+  z-index: 0;       
+  pointer-events: none; 
+}
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  filter: blur(120px);
+  z-index: 0;
+ background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%);
+}
+
+body::before {
+  background: rgba(46, 204, 113, 0.12);
+  top: -120px;
+  left: -120px;
+}
+
+body::after {
+  background: rgba(46, 204, 113, 0.08);
+  bottom: -150px;
+  right: -150px;
+}
+
+
+.addproduct-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+
 .container1 {
-
-  width: 400px;
-  height: 600px;
-  margin: auto;
-  margin-top: 50px;
-  background-color: rgba(255, 255, 255, 0.85);
-  border: 2px solid rgb(165, 12, 12);
-  border-radius: 10%;
-  box-shadow: 0 0 15px rgba(0, 0, 0, .2);
-  padding: 20px;
+  width: 650px;
+  background: #ffffff;
+  padding: 40px;
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.6s ease-in-out;
+  transition: 0.4s;
+  z-index: 1;  
 }
 
-/* عنوان Add Product */
-.container h2 {
-  color: black;
+
+.container1::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 6px;
+  width: 100%;
+ 
+}
+
+.container1:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
+}
+
+
+.container1 h2 {
   text-align: center;
+  margin-bottom: 30px;
+  color: #0f172a;
+  font-weight: 700;
+  letter-spacing: 1px;
 }
 
-/* كلمة Add Photo of product */
-label {
-  color: black;
-  font-weight: bold;
-}
 
 form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  background-color: white;
+  gap: 18px;
 }
 
 input,
 select,
 textarea {
-  padding: 10px;
-  background-color: rgb(237, 237, 242);
-  border: 2px solid black;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1.5px solid #cbd5e1;  
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background-color: #ffffff;   
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
+}
+
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #2ecc71;
+  box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.15);
+  background-color: #ffffff;
+  transform: scale(1.02);
+}
+
+
+textarea {
+  resize: none;
+  min-height: 100px;
+}
+
+
+label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+
+img {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  border-radius: 14px;
+  margin-top: 5px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 button {
-  background: #2ecc71;
+  margin-top: 15px;
+  background: linear-gradient(90deg, #2ecc71, #27ae60);
   color: white;
+  padding: 15px;
+  border-radius: 12px;
+  font-weight: 700;
   border: none;
-  padding: 10px;
   cursor: pointer;
-  border-radius: 5px;
+  transition: all 0.3s ease;
+  letter-spacing: 1px;
 }
 
 button:hover {
-  background-color: rgb(189, 221, 6);
+  transform: translateY(-4px);
+  box-shadow: 0 15px 30px rgba(46, 204, 113, 0.4);
+}
+
+
+button:active {
+  transform: scale(0.97);
+}
+
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+@media (max-width: 500px) {
+  .container1 {
+    width: 100%;
+    padding: 30px;
+  }
 }
