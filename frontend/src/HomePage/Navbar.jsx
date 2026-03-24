@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Home.css"; 
+import "./Home.css";
 
 function Navbar({ role, setRole }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -78,15 +78,18 @@ function Navbar({ role, setRole }) {
         <button className="close-btn" onClick={() => setMenuOpen(false)}>✕</button>
         <div className="sidebar-content">
           <h3 className="sidebar-title">Menu</h3>
-          
+
           {adminItem}
-          
+
           <div className="sidebar-item" onClick={() => handleLinkClick("/my-product")}>
             My Inventory
           </div>
-          
+
           <div className="sidebar-item" onClick={() => handleLinkClick("/AddOrder")}>
             Post Item
+          </div>
+          <div className="sidebar-item" onClick={() => handleLinkClick("/home")}>
+            Home
           </div>
         </div>
       </div>
