@@ -56,7 +56,8 @@ navigate("/login");
                 status:"pending",
                 mode,
                 price: Number(price),
-                userId: currentUser.uid,
+                sellerId: currentUser.uid,
+                buyerId: currentUser.uid,
                 photoURL,
                 createdAt: serverTimestamp()
             };

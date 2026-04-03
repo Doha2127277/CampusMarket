@@ -29,9 +29,10 @@ function MyProducts() {
     const fetchProducts = async () => {
       try {
         const q = query(
-          collection(db, "products"),
-          where("userId", "==", user.uid)
-        );
+    collection(db, "products"),
+    where("sellerId", "==", user.uid)  // ← هنا بدل userId
+);
+        
         const querySnapshot = await getDocs(q);
         const list = [];
         querySnapshot.forEach((docItem) => {

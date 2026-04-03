@@ -1,7 +1,15 @@
+/*
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../firebase'; 
 import { doc, getDoc } from 'firebase/firestore';
+*/
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { db, auth } from '../firebase'; 
+import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+
+
 
 function ProductDetails() {
   const { id } = useParams(); 
@@ -26,6 +34,28 @@ function ProductDetails() {
     };
     getProductData();
   }, [id]);
+
+    const handleBuyNow = async () => {
+    if (!auth.currentUser) return alert("You must log in first!");
+
+    try {
+      await addDoc(collection(db, "orders"), {
+        productId: product.id,
+        productName: product.name,
+        buyerId: auth.currentUser.uid,
+        buyerName: auth.currentUser.displayName || "No Name",
+        sellerId: product.sellerId,
+        status: "pending",
+        paymentMethod: "cash_on_delivery",
+        createdAt: serverTimestamp()
+      });
+
+      alert("Order created successfully! Pending approval from seller.");
+    } catch (error) {
+      console.error("Error creating order:", error);
+      alert("Error creating order!");
+    }
+  };
 
   if (loading) return <div style={{padding: '50px', textAlign: 'center', fontSize: '20px'}}>جاري تحميل التفاصيل...</div>;
   if (!product) return <div style={{padding: '50px', textAlign: 'center', fontSize: '20px'}}>المنتج غير موجود!</div>;
@@ -103,7 +133,7 @@ function ProductDetails() {
       }}
       onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
       onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
-      onClick={() => alert('Added to Cart!')}
+      onClick={handleBuyNow}
       >
         Add to Cart
       </button>

@@ -10,6 +10,9 @@ import MyProducts from './myProduct/myProducts.jsx';
 import AllRequests from './Admin/AllRequests.jsx';
 import ProductDetails from './HomePage/ProductDetails.jsx'; 
 
+import MyRequests from './myRequestPage/MyRequests.jsx';
+import SellerRequests from './sellerRequestpage/SellerRequests.jsx';
+
 function App() {
   const [role, setRole] = useState(localStorage.getItem("userRole") || "");
 
@@ -33,6 +36,8 @@ function App() {
         <Route path="/AddOrder" element={<AddOrder />} />
         <Route path="/my-product" element={<MyProducts />} />
         <Route path="/all-requests" element={<AllRequests />} />
+        <Route path="/my-requests" element={<MyRequests />} />
+        <Route path="/seller-requests" element={<SellerRequests />} />
         
         {}
         <Route path="/product/:id" element={<ProductDetails />} />

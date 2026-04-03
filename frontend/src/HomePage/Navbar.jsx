@@ -18,38 +18,25 @@ function Navbar({ role, setRole }) {
     setMenuOpen(false);
   };
 
-  let authButton;
-  if (role) {
-    authButton = <button className="login-btn" onClick={handleLogout}>Logout</button>;
-  } else {
-    authButton = <button className="login-btn" onClick={() => navigate("/login")}>Sign In</button>;
-  }
+  // زر تسجيل الدخول / الخروج
+  let authButton = role ? (
+    <button className="login-btn" onClick={handleLogout}>Logout</button>
+  ) : (
+    <button className="login-btn" onClick={() => navigate("/login")}>Sign In</button>
+  );
 
-  let menuIcon;
-  if (menuOpen) {
-    menuIcon = "✕";
-  } else {
-    menuIcon = "☰";
-  }
+  // أيقونة القائمة
+  let menuIcon = menuOpen ? "✕" : "☰";
+  let sidebarClass = menuOpen ? "sidebar open" : "sidebar";
 
-  let sidebarClass = "sidebar";
-  if (menuOpen) {
-    sidebarClass = "sidebar open";
-  }
+  // عناصر للـ admin
+  let adminItem = role && role.toLowerCase() === "admin" && (
+    <div className="sidebar-item" onClick={() => handleLinkClick("/all-requests")}>
+      Admin Dashboard
+    </div>
+  );
 
-  let adminItem = null;
-  if (role && role.toLowerCase() === "admin") {
-    adminItem = (
-      <div className="sidebar-item" onClick={() => handleLinkClick("/all-requests")}>
-        Admin Dashboard
-      </div>
-    );
-  }
-
-  let overlay = null;
-  if (menuOpen) {
-    overlay = <div className="sidebar-overlay" onClick={() => setMenuOpen(false)}></div>;
-  }
+  let overlay = menuOpen && <div className="sidebar-overlay" onClick={() => setMenuOpen(false)}></div>;
 
   return (
     <>
@@ -88,9 +75,20 @@ function Navbar({ role, setRole }) {
           <div className="sidebar-item" onClick={() => handleLinkClick("/AddOrder")}>
             Post Item
           </div>
+
           <div className="sidebar-item" onClick={() => handleLinkClick("/home")}>
             Home
           </div>
+
+          {/* روابط الطلبات تظهر للجميع */}
+          <div className="sidebar-item" onClick={() => handleLinkClick("/my-requests")}>
+            My Requests
+          </div>
+
+          <div className="sidebar-item" onClick={() => handleLinkClick("/seller-requests")}>
+            Seller Requests
+          </div>
+
         </div>
       </div>
     </>
