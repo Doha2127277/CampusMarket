@@ -10,9 +10,7 @@ function Home() {
     const [loading, setLoading] = useState(true);
     const [activeCategory, setActiveCategory] = useState("All");
     
-    // 1. التعديل السحري: السلة بتقرأ من الجهاز فوراً أول ما الـ Component يبدأ
     const [cart, setCart] = useState(() => {
-        // بنحاول نجيب أي سلة متسيفة لليوزر ده عشان الزراير متظهرش خضراء في أول ثانية
         const user = auth.currentUser;
         const saved = user ? localStorage.getItem(`cart_${user.uid}`) : null;
         return saved ? JSON.parse(saved) : [];
@@ -22,7 +20,6 @@ function Home() {
     const location = useLocation();
     const categories = ["All", "Engineering", "Medicine", "Business"];
 
-    // 2. جلب المنتجات (زي ما هي)
     useEffect(() => {
         const q = query(collection(db, "products"), where("status", "==", "approved"));
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -36,7 +33,6 @@ function Home() {
         return () => unsubscribe();
     }, []);
 
-    // 3. المزامنة عند فتح الصفحة ومراقبة الـ Auth والـ Storage
     useEffect(() => {
         const syncCart = () => {
             const user = auth.currentUser;
@@ -46,7 +42,6 @@ function Home() {
             }
         };
 
-        // بنراقب حالة اليوزر أول ما يفتح عشان السلة تتحدث لو عمل ريفرش
         const unsubscribeAuth = auth.onAuthStateChanged((user) => {
             syncCart();
         });
@@ -58,7 +53,6 @@ function Home() {
         };
     }, []);
 
-    // 4. الفلترة والبحث (زي ما هي)
     useEffect(() => {
         let result = products;
         const searchFromNav = location.state?.search || "";
@@ -69,7 +63,6 @@ function Home() {
         setFilteredProducts(result);
     }, [products, activeCategory, location.state]);
 
-    // 5. دالة الإضافة والحذف مع ضمان عدم التصفير
     const handleCartToggle = (e, product) => {
         e.stopPropagation();
         if (!auth.currentUser) {
@@ -78,7 +71,6 @@ function Home() {
         }
 
         const cartKey = `cart_${auth.currentUser.uid}`;
-        // بنستخدم String لضمان إن الـ IDs تتطابق صح
         const isInCart = cart.some(item => String(item.id) === String(product.id));
         let updatedCart;
 
@@ -112,7 +104,6 @@ function Home() {
 
                 <div className="products-grid">
                     {filteredProducts.map((product) => {
-                        // تشيك لحظي لكل منتج
                         const isInCart = cart.some(item => String(item.id) === String(product.id));
                         const isOwner = auth.currentUser && product.sellerId === auth.currentUser.uid;
 
