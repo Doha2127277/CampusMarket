@@ -30,7 +30,7 @@ function MyRequests() {
   return (
     <div className="main-wrapper">
       <header className="hero" style={{ padding: '20px 0' }}>
-        <h1 className="hero-title">طلباتي</h1>
+        <h1 className="hero-title">My Orders</h1>
       </header>
 
       <div className="home-container">

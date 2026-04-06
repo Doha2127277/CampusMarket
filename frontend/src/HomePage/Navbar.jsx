@@ -6,8 +6,16 @@ function Navbar({ role, setRole }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
+  // التعديل هنا: حماية المسارات من الدخول بدون Login
   const handleLinkClick = (path) => {
-    navigate(path);
+    const protectedPaths = ["/my-requests", "/seller-requests", "/my-product", "/AddOrder", "/all-requests"];
+    
+    if (protectedPaths.includes(path) && !role) {
+      alert("عفواً، يجب تسجيل الدخول للوصول إلى هذه الصفحة");
+      navigate("/login");
+    } else {
+      navigate(path);
+    }
     setMenuOpen(false);
   };
 
@@ -18,18 +26,15 @@ function Navbar({ role, setRole }) {
     setMenuOpen(false);
   };
 
-  // زر تسجيل الدخول / الخروج
   let authButton = role ? (
     <button className="login-btn" onClick={handleLogout}>Logout</button>
   ) : (
     <button className="login-btn" onClick={() => navigate("/login")}>Sign In</button>
   );
 
-  // أيقونة القائمة
   let menuIcon = menuOpen ? "✕" : "☰";
   let sidebarClass = menuOpen ? "sidebar open" : "sidebar";
 
-  // عناصر للـ admin
   let adminItem = role && role.toLowerCase() === "admin" && (
     <div className="sidebar-item" onClick={() => handleLinkClick("/all-requests")}>
       Admin Dashboard
@@ -65,30 +70,12 @@ function Navbar({ role, setRole }) {
         <button className="close-btn" onClick={() => setMenuOpen(false)}>✕</button>
         <div className="sidebar-content">
           <h3 className="sidebar-title">Menu</h3>
-
           {adminItem}
-
-          <div className="sidebar-item" onClick={() => handleLinkClick("/my-product")}>
-            My Inventory
-          </div>
-
-          <div className="sidebar-item" onClick={() => handleLinkClick("/AddOrder")}>
-            Post Item
-          </div>
-
-          <div className="sidebar-item" onClick={() => handleLinkClick("/home")}>
-            Home
-          </div>
-
-          {/* روابط الطلبات تظهر للجميع */}
-          <div className="sidebar-item" onClick={() => handleLinkClick("/my-requests")}>
-            My Requests
-          </div>
-
-          <div className="sidebar-item" onClick={() => handleLinkClick("/seller-requests")}>
-            Seller Requests
-          </div>
-
+          <div className="sidebar-item" onClick={() => handleLinkClick("/my-product")}> My Inventory </div>
+          <div className="sidebar-item" onClick={() => handleLinkClick("/AddOrder")}> Post Item </div>
+          <div className="sidebar-item" onClick={() => handleLinkClick("/home")}> Home </div>
+          <div className="sidebar-item" onClick={() => handleLinkClick("/my-requests")}> My Requests </div>
+          <div className="sidebar-item" onClick={() => handleLinkClick("/seller-requests")}> Seller Requests </div>
         </div>
       </div>
     </>
