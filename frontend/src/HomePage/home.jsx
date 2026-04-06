@@ -9,13 +9,20 @@ function Home() {
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeCategory, setActiveCategory] = useState("All");
-    const [cart, setCart] = useState([]); 
+    
+    // 1. التعديل السحري: السلة بتقرأ من الجهاز فوراً أول ما الـ Component يبدأ
+    const [cart, setCart] = useState(() => {
+        // بنحاول نجيب أي سلة متسيفة لليوزر ده عشان الزراير متظهرش خضراء في أول ثانية
+        const user = auth.currentUser;
+        const saved = user ? localStorage.getItem(`cart_${user.uid}`) : null;
+        return saved ? JSON.parse(saved) : [];
+    });
+
     const navigate = useNavigate();
     const location = useLocation();
-
     const categories = ["All", "Engineering", "Medicine", "Business"];
 
-    // 1. جلب المنتجات (مرة واحدة عند التحميل)
+    // 2. جلب المنتجات (زي ما هي)
     useEffect(() => {
         const q = query(collection(db, "products"), where("status", "==", "approved"));
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -29,25 +36,29 @@ function Home() {
         return () => unsubscribe();
     }, []);
 
-    // 2. دالة المزامنة من الـ Storage
-    const syncCart = () => {
-        if (auth.currentUser) {
-            const savedCart = localStorage.getItem(`cart_${auth.currentUser.uid}`);
-            const parsedCart = savedCart ? JSON.parse(savedCart) : [];
-            setCart(parsedCart);
-        }
-    };
-
-    // 3. المزامنة عند فتح الصفحة + مراقبة التغييرات الخارجية فقط
+    // 3. المزامنة عند فتح الصفحة ومراقبة الـ Auth والـ Storage
     useEffect(() => {
-        syncCart();
-        
-        // بنسمع للتغيير اللي جاي من صفحات تانية (زي ProductDetails)
+        const syncCart = () => {
+            const user = auth.currentUser;
+            if (user) {
+                const savedCart = localStorage.getItem(`cart_${user.uid}`);
+                setCart(savedCart ? JSON.parse(savedCart) : []);
+            }
+        };
+
+        // بنراقب حالة اليوزر أول ما يفتح عشان السلة تتحدث لو عمل ريفرش
+        const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+            syncCart();
+        });
+
         window.addEventListener("storage", syncCart);
-        return () => window.removeEventListener("storage", syncCart);
+        return () => {
+            unsubscribeAuth();
+            window.removeEventListener("storage", syncCart);
+        };
     }, []);
 
-    // 4. الفلترة والبحث
+    // 4. الفلترة والبحث (زي ما هي)
     useEffect(() => {
         let result = products;
         const searchFromNav = location.state?.search || "";
@@ -58,7 +69,7 @@ function Home() {
         setFilteredProducts(result);
     }, [products, activeCategory, location.state]);
 
-    // 5. التعامل مع الإضافة والحذف (بدون عمل Loop)
+    // 5. دالة الإضافة والحذف مع ضمان عدم التصفير
     const handleCartToggle = (e, product) => {
         e.stopPropagation();
         if (!auth.currentUser) {
@@ -67,16 +78,16 @@ function Home() {
         }
 
         const cartKey = `cart_${auth.currentUser.uid}`;
-        const isInCart = cart.some(item => item.id === product.id);
+        // بنستخدم String لضمان إن الـ IDs تتطابق صح
+        const isInCart = cart.some(item => String(item.id) === String(product.id));
         let updatedCart;
 
         if (isInCart) {
-            updatedCart = cart.filter(item => item.id !== product.id);
+            updatedCart = cart.filter(item => String(item.id) !== String(product.id));
         } else {
             updatedCart = [...cart, product];
         }
 
-        // بنحدث الـ State والـ Storage مع بعض يدوياً وبنبعت الإشارة مرة واحدة
         setCart(updatedCart);
         localStorage.setItem(cartKey, JSON.stringify(updatedCart));
         window.dispatchEvent(new Event("storage")); 
@@ -101,7 +112,8 @@ function Home() {
 
                 <div className="products-grid">
                     {filteredProducts.map((product) => {
-                        const isInCart = cart.some(item => item.id === product.id);
+                        // تشيك لحظي لكل منتج
+                        const isInCart = cart.some(item => String(item.id) === String(product.id));
                         const isOwner = auth.currentUser && product.sellerId === auth.currentUser.uid;
 
                         return (
