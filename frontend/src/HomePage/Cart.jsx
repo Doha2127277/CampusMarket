@@ -2,40 +2,35 @@ import React, { useState, useEffect } from "react";
 import { db, auth } from "../firebase";
 import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import "./Home.css"; // هنستخدم نفس ملف الـ CSS ونضيف عليه تنسيقات الكارت
+import "./Home.css"; 
 
 function Cart() {
     const [cart, setCart] = useState([]);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    // 1. تحميل السلة من localStorage عند فتح الصفحة
     useEffect(() => {
         if (auth.currentUser) {
             const savedCart = localStorage.getItem(`cart_${auth.currentUser.uid}`);
             if (savedCart) setCart(JSON.parse(savedCart));
         } else {
-            navigate("/login"); // لو مش مسجل يدخل يسجل
+            navigate("/login"); 
         }
     }, [navigate]);
 
-    // 2. حساب السعر الإجمالي
     const totalPrice = cart.reduce((sum, item) => sum + Number(item.price), 0);
 
-    // 3. حذف عنصر من السلة
     const removeItem = (id) => {
         const updatedCart = cart.filter(item => item.id !== id);
         setCart(updatedCart);
         localStorage.setItem(`cart_${auth.currentUser.uid}`, JSON.stringify(updatedCart));
     };
 
-    // 4. إتمام الطلب (نفس منطق الموبايل بالظبط)
     const handleCheckout = async () => {
         if (cart.length === 0) return;
         setLoading(true);
 
         try {
-            // جلب اسم المشتري
             let realName = "Student";
             const userRef = doc(db, "users", auth.currentUser.uid);
             const userSnap = await getDoc(userRef);
@@ -43,9 +38,8 @@ function Cart() {
                 realName = userSnap.data().fullName || "Student";
             }
 
-            // تقسيم المنتجات حسب الـ Seller
             const ordersBySeller = cart.reduce((acc, item) => {
-                const sId = item.sellerId || "unknown";
+                const sId = item.userId || item.sellerId || "unknown";
                 if (!acc[sId]) {
                     acc[sId] = { items: [], total: 0 };
                 }
@@ -56,7 +50,6 @@ function Cart() {
 
             const sellerIds = Object.keys(ordersBySeller);
 
-            // إضافة طلب منفصل لكل بائع في Firestore
             await Promise.all(sellerIds.map(async (sId) => {
                 const orderData = ordersBySeller[sId];
                 await addDoc(collection(db, "orders"), {
@@ -70,10 +63,11 @@ function Cart() {
                 });
             }));
 
-            // تنظيف السلة بعد النجاح
             setCart([]);
             localStorage.removeItem(`cart_${auth.currentUser.uid}`);
-            alert(`Success! 🎉 Your order has been placed.`);
+            
+            alert(`Success! 🎉\nYour order has been split into ${sellerIds.length} separate requests.`);
+            
             navigate("/");
 
         } catch (error) {

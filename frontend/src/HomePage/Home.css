@@ -271,17 +271,15 @@
   padding: 5rem 0;
   grid-column: 1 / -1;
 }
-/* حل مشكلة اختفاء كلام البحث ✅ */
 .search-input-nav {
-    background-color: #f1f5f9 !important; /* خلفية فاتحة */
-    color: #0f172a !important; /* خط غامق عشان يبان */
+    background-color: #f1f5f9 !important; 
+    color: #0f172a !important; 
     border: 1px solid #cbd5e1;
     width: 300px;
     padding: 8px 10px 8px 35px;
     border-radius: 20px;
 }
 
-/* الترحيب بالاسم */
 .user-greeting {
     color: #e2e8f0;
     font-size: 0.9rem;
@@ -289,7 +287,6 @@
     font-weight: 500;
 }
 
-/* أيقونة السلة */
 .cart-icon-container {
     position: relative;
     font-size: 1.5rem;
@@ -307,7 +304,6 @@
     font-size: 10px;
 }
 
-/* الزراير داخل الكارت */
 .card-actions-row {
     margin-top: 15px;
     display: flex;
@@ -335,7 +331,6 @@
     cursor: pointer;
 }
 
-/* الفلتر بشكل الموبايل */
 .filter-chips {
     display: flex;
     gap: 10px;
@@ -365,7 +360,6 @@
     border: 1px solid #cbd5e1;
 }
 
-/* Cart Page Styles */
 .cart-page-header {
     display: flex;
     justify-content: space-between;
@@ -378,9 +372,8 @@
 .cart-container {
     max-width: 600px;
     margin: 20px auto;
-    padding: 0 15px 120px 15px; /* مسافة عشان الفوتر الثابت */
-}
-
+    padding: 0 15px 120px 15px; 
+  }
 .cart-item-card {
     display: flex;
     align-items: center;
@@ -427,7 +420,7 @@
     display: flex;
     flex-direction: column;
     gap: 15px;
-    max-width: 600px; /* لتوحيد العرض مع الحاوية */
+    max-width: 600px; 
     margin: 0 auto;
 }
 
