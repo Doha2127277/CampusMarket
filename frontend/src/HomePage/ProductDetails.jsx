@@ -22,7 +22,6 @@ function ProductDetails() {
           const productData = { id: docSnap.id, ...docSnap.data() };
           setProduct(productData);
 
-          // 1. جلب اسم البائع من مجموعة users
           const sId = productData.userId || productData.sellerId;
           if (sId) {
             const userSnap = await getDoc(doc(db, "users", sId));
@@ -31,7 +30,6 @@ function ProductDetails() {
             }
           }
 
-          // 2. التحقق من حالة السلة
           if (auth.currentUser) {
             const cartKey = `cart_${auth.currentUser.uid}`;
             const savedCart = JSON.parse(localStorage.getItem(cartKey)) || [];
@@ -54,10 +52,8 @@ function ProductDetails() {
     let updatedCart;
 
     if (isInCart) {
-      // حذف من السلة
       updatedCart = cart.filter(item => item.id !== product.id);
     } else {
-      // إضافة للسلة (بنضيف المنتج كله)
       updatedCart = [...cart, { ...product, id: id }];
     }
 
@@ -65,7 +61,6 @@ function ProductDetails() {
     setIsInCart(!isInCart);
     localStorage.setItem(cartKey, JSON.stringify(updatedCart));
 
-    // تحديث العداد في الـ Navbar فوراً
     window.dispatchEvent(new Event("storage"));
   };
 
@@ -120,25 +115,24 @@ function ProductDetails() {
              <h3 style={styles.secTitle}>Description</h3>
              <p style={styles.descContent}>{product.description || "No description provided."}</p>
           </div>
-
-          <button 
-            style={{
-                ...styles.cartBtn,
-                backgroundColor: isInCart ? '#ef4444' : '#3b82f6'
-            }}
-            onClick={handleToggleCart}
-          >
-            {isInCart ? "Remove from Cart" : "Add to Cart"}
-          </button>
+<button 
+  style={{
+      ...styles.cartBtn,
+      // التعديل هنا: بنضيف (product &&) للتأكد إن البيانات جاهزة
+      backgroundColor: (product && cart.some(item => item.id === product.id)) ? '#ef4444' : '#10b981' 
+  }}
+  onClick={handleToggleCart}
+>
+  {/* ونفس الشيء هنا للكلمة */}
+  {(product && cart.some(item => item.id === product.id)) ? "Remove from Cart 🗑️" : "Add to Cart 🛒"}
+</button>
         </div>
       </div>
     </div>
   );
 }
 
-// الستايلات (مستوحاة من الموبايل تماماً)
 
-// استبدلي قسم الـ styles القديم بهذا التعديل ✅
 const styles = {
   mainContainer: { 
     maxWidth: '1000px', 
@@ -163,10 +157,10 @@ const styles = {
   },
   headerTitle: { fontSize: '1.2rem', color: '#1e293b' },
   
-  // تعديل الـ Grid لتصغير مساحة الصورة وإعطاء مساحة أكبر للنص
+ 
   gridContainer: { 
     display: 'grid', 
-    gridTemplateColumns: '350px 1fr', // تحديد عرض ثابت لمنطقة الصورة
+    gridTemplateColumns: '350px 1fr', 
     gap: '50px', 
     alignItems: 'start' 
   },
@@ -176,21 +170,20 @@ const styles = {
     justifyContent: 'center'
   },
 
-  // تحديد أبعاد الصورة لتكون مربعة وأصغر
   imageWrapper: { 
     position: 'relative', 
     borderRadius: '20px', 
     overflow: 'hidden', 
     boxShadow: '0 4px 25px rgba(0,0,0,0.1)',
-    width: '350px', // عرض الصورة
-    height: '350px', // طول الصورة (مربعة)
+    width: '350px', 
+    height: '350px', 
     backgroundColor: '#fff'
   },
 
   img: { 
     width: '100%', 
     height: '100%', 
-    objectFit: 'cover' // لضمان عدم تشوه الصورة
+    objectFit: 'cover' 
   },
 
   modeBadge: { 
@@ -209,7 +202,7 @@ const styles = {
     textAlign: 'left', 
     display: 'flex', 
     flexDirection: 'column',
-    height: '350px', // نفس ارتفاع الصورة ليكون الشكل متساوي
+    height: '350px', 
     justifyContent: 'space-between' 
   },
 
@@ -252,7 +245,7 @@ const styles = {
     fontSize: '0.95rem',
     margin: 0,
     display: '-webkit-box',
-    WebkitLineClamp: '4', // عرض 4 أسطر فقط لو الكلام كتير عشان ميبوظش المحاذاة
+    WebkitLineClamp: '4', 
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden'
   },

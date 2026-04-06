@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../firebase'; 
-import { collection, onSnapshot, query, where, doc, deleteDoc } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { useNavigate, useLocation } from "react-router-dom";
 import './Home.css';
 
@@ -15,6 +15,7 @@ function Home() {
 
     const categories = ["All", "Engineering", "Medicine", "Business"];
 
+    // 1. جلب المنتجات (مرة واحدة عند التحميل)
     useEffect(() => {
         const q = query(collection(db, "products"), where("status", "==", "approved"));
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -28,51 +29,57 @@ function Home() {
         return () => unsubscribe();
     }, []);
 
-    useEffect(() => {
+    // 2. دالة المزامنة من الـ Storage
+    const syncCart = () => {
         if (auth.currentUser) {
             const savedCart = localStorage.getItem(`cart_${auth.currentUser.uid}`);
-            if (savedCart) setCart(JSON.parse(savedCart));
+            const parsedCart = savedCart ? JSON.parse(savedCart) : [];
+            setCart(parsedCart);
         }
+    };
+
+    // 3. المزامنة عند فتح الصفحة + مراقبة التغييرات الخارجية فقط
+    useEffect(() => {
+        syncCart();
+        
+        // بنسمع للتغيير اللي جاي من صفحات تانية (زي ProductDetails)
+        window.addEventListener("storage", syncCart);
+        return () => window.removeEventListener("storage", syncCart);
     }, []);
 
-    useEffect(() => {
-        if (auth.currentUser) {
-            localStorage.setItem(`cart_${auth.currentUser.uid}`, JSON.stringify(cart));
-        }
-    }, [cart]);
-
+    // 4. الفلترة والبحث
     useEffect(() => {
         let result = products;
         const searchFromNav = location.state?.search || "";
-
-        if (activeCategory !== "All") {
-            result = result.filter(p => p.category === activeCategory);
-        }
-
+        if (activeCategory !== "All") result = result.filter(p => p.category === activeCategory);
         if (searchFromNav) {
-            result = result.filter(p =>
-                p.name.toLowerCase().includes(searchFromNav.toLowerCase())
-            );
+            result = result.filter(p => p.name.toLowerCase().includes(searchFromNav.toLowerCase()));
         }
         setFilteredProducts(result);
     }, [products, activeCategory, location.state]);
 
-    const handleAddToCart = (e, product) => {
+    // 5. التعامل مع الإضافة والحذف (بدون عمل Loop)
+    const handleCartToggle = (e, product) => {
         e.stopPropagation();
         if (!auth.currentUser) {
-            alert("Please login first! 🔐");
             navigate("/login");
             return;
         }
-        if (product.sellerId === auth.currentUser.uid) {
-            alert("You cannot buy your own product! 😅");
-            return;
-        }
+
+        const cartKey = `cart_${auth.currentUser.uid}`;
         const isInCart = cart.some(item => item.id === product.id);
-        if (!isInCart) {
-            setCart([...cart, product]);
-            alert("تمت الإضافة بنجاح! 🎉");
+        let updatedCart;
+
+        if (isInCart) {
+            updatedCart = cart.filter(item => item.id !== product.id);
+        } else {
+            updatedCart = [...cart, product];
         }
+
+        // بنحدث الـ State والـ Storage مع بعض يدوياً وبنبعت الإشارة مرة واحدة
+        setCart(updatedCart);
+        localStorage.setItem(cartKey, JSON.stringify(updatedCart));
+        window.dispatchEvent(new Event("storage")); 
     };
 
     if (loading) return <div className="loading-state">Loading...</div>;
@@ -106,14 +113,18 @@ function Home() {
                                         <span className="product-price">{product.price} EGP</span>
                                     </div>
                                     <span className="product-category">{product.category}</span>
+                                    
                                     <div className="card-actions-row">
                                         {!isOwner && (
                                             <button 
-                                                className={`cart-action-btn ${isInCart ? 'disabled-grey' : 'add'}`}
-                                                onClick={(e) => handleAddToCart(e, product)}
-                                                disabled={isInCart}
+                                                className={`cart-action-btn ${isInCart ? 'remove' : 'add'}`} 
+                                                style={{ 
+                                                    backgroundColor: isInCart ? '#ef4444' : '#10b981',
+                                                    color: 'white', border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer'
+                                                }}
+                                                onClick={(e) => handleCartToggle(e, product)}
                                             >
-                                                {isInCart ? "In Cart ✔️" : "Add 🛒"}
+                                                {isInCart ? "Remove 🗑️" : "Add 🛒"}
                                             </button>
                                         )}
                                     </div>
