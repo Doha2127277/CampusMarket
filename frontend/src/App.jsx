@@ -11,7 +11,7 @@ import AllRequests from './Admin/AllRequests.jsx';
 import ProductDetails from './HomePage/ProductDetails.jsx'; 
 import MyRequests from './myRequestPage/MyRequests.jsx';
 import SellerRequests from './sellerRequestpage/SellerRequests.jsx';
-
+import Cart from './HomePage/Cart';
 function App() {
   const [role, setRole] = useState(localStorage.getItem("userRole") || "");
 
@@ -48,6 +48,7 @@ function App() {
         <Route path="/my-requests" element={<MyRequests />} />
         <Route path="/seller-requests" element={<SellerRequests />} />
         <Route path="/product/:id" element={<ProductDetails />} />
+      <Route path="/cart" element={<Cart />} />
       </Routes>
     </Router>
   );

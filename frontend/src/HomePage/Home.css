@@ -354,3 +354,112 @@
     background: #38bdf8;
     color: white;
 }
+.nav-right {
+    display: flex;
+    align-items: center;
+}
+.cart-action-btn.disabled-grey {
+    background-color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed !important;
+    border: 1px solid #cbd5e1;
+}
+
+/* Cart Page Styles */
+.cart-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: white;
+    border-bottom: 1px solid #eee;
+}
+
+.cart-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 0 15px 120px 15px; /* مسافة عشان الفوتر الثابت */
+}
+
+.cart-item-card {
+    display: flex;
+    align-items: center;
+    background: white;
+    padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.cart-item-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.cart-item-info {
+    flex: 1;
+    margin-left: 15px;
+}
+
+.cart-item-info h4 { margin: 0; font-size: 1.1rem; }
+.item-cat { color: #94a3b8; font-size: 0.8rem; margin: 5px 0; }
+.item-prc { color: #2563eb; font-weight: bold; margin: 0; }
+
+.remove-item-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #ef4444;
+}
+
+.cart-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: 20px;
+    border-top: 1px solid #eee;
+    box-shadow: 0 -5px 15px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 600px; /* لتوحيد العرض مع الحاوية */
+    margin: 0 auto;
+}
+
+.total-section {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.2rem;
+}
+
+.confirm-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+.empty-cart {
+    text-align: center;
+    margin-top: 100px;
+    color: #94a3b8;
+}
+
+.shop-now-btn {
+    background: #f1f5f9;
+    color: #3b82f6;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 10px;
+    margin-top: 20px;
+    cursor: pointer;
+}

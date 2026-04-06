@@ -8,7 +8,6 @@ function Home() {
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState("");
     const [activeCategory, setActiveCategory] = useState("All");
     const [cart, setCart] = useState([]); 
     const navigate = useNavigate();
@@ -42,11 +41,9 @@ function Home() {
         }
     }, [cart]);
 
-    // 🔥 الفلتر + السيرش من الناف بار
     useEffect(() => {
         let result = products;
-
-        const searchFromNav = location.state?.search || searchQuery;
+        const searchFromNav = location.state?.search || "";
 
         if (activeCategory !== "All") {
             result = result.filter(p => p.category === activeCategory);
@@ -57,39 +54,24 @@ function Home() {
                 p.name.toLowerCase().includes(searchFromNav.toLowerCase())
             );
         }
-
         setFilteredProducts(result);
-    }, [products, searchQuery, activeCategory, location.state]);
+    }, [products, activeCategory, location.state]);
 
-    const toggleCart = (e, product) => {
+    const handleAddToCart = (e, product) => {
         e.stopPropagation();
         if (!auth.currentUser) {
-            alert("Please login first!");
+            alert("Please login first! 🔐");
             navigate("/login");
             return;
         }
-
         if (product.sellerId === auth.currentUser.uid) {
-            alert("You cannot buy your own product!");
+            alert("You cannot buy your own product! 😅");
             return;
         }
-
         const isInCart = cart.some(item => item.id === product.id);
-        if (isInCart) {
-            setCart(cart.filter(item => item.id !== product.id));
-        } else {
+        if (!isInCart) {
             setCart([...cart, product]);
-        }
-    };
-
-    const handleDelete = async (e, productId) => {
-        e.stopPropagation();
-        if (window.confirm("Are you sure you want to delete this product?")) {
-            try {
-                await deleteDoc(doc(db, "products", productId));
-            } catch (error) {
-                console.error("Delete error:", error);
-            }
+            alert("تمت الإضافة بنجاح! 🎉");
         }
     };
 
@@ -98,7 +80,6 @@ function Home() {
     return (
         <div className="main-wrapper">
             <div className="home-container">
-
                 <div className="filter-chips">
                     {categories.map(cat => (
                         <button 
@@ -119,31 +100,20 @@ function Home() {
                         return (
                             <div key={product.id} className="product-card" onClick={() => navigate(`/product/${product.id}`)}>
                                 <img src={product.photoURL} alt="" className="product-image" />
-                                
                                 <div className="product-info">
                                     <div className="product-header">
                                         <h3 className="product-name">{product.name}</h3>
                                         <span className="product-price">{product.price} EGP</span>
                                     </div>
-
                                     <span className="product-category">{product.category}</span>
-                                    
                                     <div className="card-actions-row">
                                         {!isOwner && (
                                             <button 
-                                                className={`cart-action-btn ${isInCart ? 'remove' : 'add'}`}
-                                                onClick={(e) => toggleCart(e, product)}
+                                                className={`cart-action-btn ${isInCart ? 'disabled-grey' : 'add'}`}
+                                                onClick={(e) => handleAddToCart(e, product)}
+                                                disabled={isInCart}
                                             >
-                                                {isInCart ? "Remove 🗑️" : "Add 🛒"}
-                                            </button>
-                                        )}
-                                        
-                                        {isOwner && (
-                                            <button 
-                                                className="delete-product-btn" 
-                                                onClick={(e) => handleDelete(e, product.id)}
-                                            >
-                                                Delete 🗑️
+                                                {isInCart ? "In Cart ✔️" : "Add 🛒"}
                                             </button>
                                         )}
                                     </div>
@@ -152,10 +122,6 @@ function Home() {
                         );
                     })}
                 </div>
-
-                {filteredProducts.length === 0 && (
-                    <div className="no-products">No products found.</div>
-                )}
             </div>
         </div>
     );
