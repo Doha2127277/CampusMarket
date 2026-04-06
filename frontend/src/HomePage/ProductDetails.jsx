@@ -118,13 +118,12 @@ function ProductDetails() {
 <button 
   style={{
       ...styles.cartBtn,
-      // التعديل هنا: بنضيف (product &&) للتأكد إن البيانات جاهزة
-      backgroundColor: (product && cart.some(item => item.id === product.id)) ? '#ef4444' : '#10b981' 
+      // هنا بنستخدم isInCart مباشرة عشان نضمن سرعة استجابة اللون
+      backgroundColor: isInCart ? '#ef4444' : '#10b981' 
   }}
   onClick={handleToggleCart}
 >
-  {/* ونفس الشيء هنا للكلمة */}
-  {(product && cart.some(item => item.id === product.id)) ? "Remove from Cart 🗑️" : "Add to Cart 🛒"}
+  {isInCart ? "Remove from Cart 🗑️" : "Add to Cart 🛒"}
 </button>
         </div>
       </div>
