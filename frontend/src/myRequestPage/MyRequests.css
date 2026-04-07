@@ -1,31 +1,68 @@
-/* استيراد تنسيقات الهوم لو حابة توحدي الملفات، أو ضيفي دول */
-.products-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 25px;
+.my-requests-container {
+    max-width: 800px;
+    margin: 0 auto;
     padding: 20px;
+    background-color: #F8FAFC;
 }
 
-/* لون خاص لـ Badge الحالة */
-.mode-badge.pending {
-    background-color: #ffc107; /* أصفر للانتظار */
-    color: #000;
+.main-header-web {
+    background-color: #1d0aca;
+    padding: 30px;
+    border-radius: 0 0 30px 30px;
+    text-align: center;
+    margin-bottom: 20px;
 }
 
-.mode-badge.approved {
-    background-color: #28a745; /* أخضر للموافقة */
+.main-title-web {
     color: #fff;
+    font-size: 24px;
+    font-weight: 900;
 }
 
-/* تأكدي إن التنسيقات دي مطابقة للي عندك في Home.css */
-.product-card {
-    background: white;
-    border-radius: 12px;
+.order-card-web {
+    background: #fff;
+    border-radius: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
 }
 
-.product-card:hover {
-    transform: translateY(-5px);
-}
+/* Status Bar */
+.status-bar { padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+.status-bar.approved { background: #E8F5E9; color: #2E7D32; }
+.status-bar.pending { background: #FFF3E0; color: #EF6C00; }
+.status-bar.rejected { background: #FFEBEE; color: #C62828; }
+
+.status-label { font-weight: 900; text-transform: uppercase; font-size: 12px; }
+.date-text { font-size: 12px; font-weight: 700; }
+
+/* Products List */
+.order-items-list { padding: 20px; }
+.item-row { display: flex; align-items: center; margin-bottom: 15px; }
+.prod-img-web { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; }
+.item-info { margin-left: 15px; }
+.prod-name-web { font-weight: 700; margin: 0; color: #1E293B; }
+.prod-price-web { color: #1d0aca; font-weight: 800; margin: 5px 0 0; }
+
+/* Chat Section */
+.chat-area-web { background-color: #F1F5F9; padding: 20px; border-top: 1px solid #E2E8F0; }
+.chat-title-web { font-size: 13px; font-weight: 800; color: #64748B; margin-bottom: 15px; }
+.messages-list-web { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+
+.msg-bubble-web { padding: 10px 15px; border-radius: 15px; max-width: 80%; }
+.msg-bubble-web.me { align-self: flex-end; background-color: #1d0aca; color: white; border-bottom-right-radius: 2px; }
+.msg-bubble-web.seller { align-self: flex-start; background-color: white; border: 1px solid #E2E8F0; border-bottom-left-radius: 2px; }
+
+.sender-name-web { font-size: 10px; font-weight: 900; display: block; margin-bottom: 4px; opacity: 0.8; }
+.msg-text-web { font-size: 14px; margin: 0; }
+
+.chat-input-web { display: flex; gap: 10px; }
+.chat-input-web input { flex: 1; padding: 10px 15px; border-radius: 25px; border: 1px solid #CBD5E1; outline: none; }
+.send-btn-web { background: #1d0aca; color: white; border: none; padding: 8px 20px; border-radius: 25px; font-weight: 800; cursor: pointer; }
+
+/* Footer */
+.order-footer-web { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: #fff; border-top: 1px solid #F1F5F9; }
+.seller-name-web-label { font-weight: 700; color: #64748B; font-size: 14px; }
+.total-amount-web { font-size: 18px; font-weight: 900; color: #1E293B; }
+
+.loading-state { text-align: center; padding: 50px; font-weight: bold; color: #1d0aca; }

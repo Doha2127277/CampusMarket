@@ -1,0 +1,109 @@
+.seller-requests-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #F8FAFC;
+    min-height: 100vh;
+}
+
+.seller-header-web {
+    background-color: #1d0aca;
+    padding: 30px;
+    border-radius: 0 0 40px 40px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.seller-title-web {
+    color: white;
+    font-size: 28px;
+    font-weight: 900;
+}
+
+.seller-horizontal-card {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    background: white;
+    border-radius: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    overflow: hidden;
+    border: 1px solid #E2E8F0;
+    min-height: 420px;
+}
+
+.order-info-section {
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #F1F5F9;
+}
+
+.status-badge-web {
+    align-self: flex-start;
+    padding: 6px 15px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-bottom: 15px;
+}
+.status-badge-web.approved { background: #E8F5E9; color: #2E7D32; }
+.status-badge-web.pending { background: #FFF3E0; color: #EF6C00; }
+.status-badge-web.rejected { background: #FFEBEE; color: #C62828; }
+
+.buyer-name-web { font-weight: 800; font-size: 18px; color: #1E293B; margin: 0; }
+.order-date-web { font-size: 12px; color: #64748B; margin: 5px 0 20px; }
+
+.products-mini-list { flex: 1; }
+.product-row-web {
+    display: flex;
+    align-items: center;
+    background: #F8FAFC;
+    padding: 10px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
+
+/* تعديل حجم الصورة وضمان عدم تشوهها */
+.mini-prod-img { 
+    width: 60px; 
+    height: 60px; 
+    border-radius: 8px; 
+    object-fit: cover; /* هذا السطر مهم جداً */
+    background-color: #eee;
+}
+
+.mini-prod-info { margin-left: 12px; display: flex; flex-direction: column; }
+.mini-name { font-weight: 700; color: #334155; }
+.mini-price { color: #1d0aca; font-weight: 800; font-size: 13px; }
+
+.seller-actions { display: flex; gap: 10px; margin: 20px 0; }
+.approve-btn-web, .reject-btn-web {
+    flex: 1; padding: 12px; border-radius: 12px; border: none;
+    font-weight: 800; cursor: pointer; color: white; transition: 0.3s;
+}
+.approve-btn-web { background: #2E7D32; }
+.reject-btn-web { background: #C62828; }
+
+.income-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 15px; border-top: 2px dashed #F1F5F9;
+}
+.income-footer strong { font-size: 20px; color: #1d0aca; }
+
+.seller-chat-section { background-color: #FCFDFE; padding: 25px; display: flex; flex-direction: column; }
+.chat-messages-web { flex: 1; overflow-y: auto; max-height: 240px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+
+.bubble-web { padding: 10px 15px; border-radius: 15px; max-width: 85%; font-size: 14px; }
+.bubble-web.me { align-self: flex-end; background: #1d0aca; color: white; border-bottom-right-radius: 2px; }
+.bubble-web.buyer { align-self: flex-start; background: white; border: 1px solid #E2E8F0; border-bottom-left-radius: 2px; }
+
+.chat-input-row { display: flex; gap: 8px; }
+.chat-input-row input { flex: 1; padding: 10px 15px; border-radius: 12px; border: 1px solid #E2E8F0; outline: none; }
+.chat-input-row button { background: #1d0aca; color: white; border: none; border-radius: 12px; padding: 0 15px; font-weight: 800; cursor: pointer; }
+
+@media (max-width: 850px) {
+    .seller-horizontal-card { grid-template-columns: 1fr; }
+    .order-info-section { border-right: none; border-bottom: 1px solid #EEE; }
+}
