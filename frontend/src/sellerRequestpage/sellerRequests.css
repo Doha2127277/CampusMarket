@@ -65,12 +65,12 @@
     margin-bottom: 10px;
 }
 
-/* تعديل حجم الصورة وضمان عدم تشوهها */
+
 .mini-prod-img { 
     width: 60px; 
     height: 60px; 
     border-radius: 8px; 
-    object-fit: cover; /* هذا السطر مهم جداً */
+    object-fit: cover; 
     background-color: #eee;
 }
 
