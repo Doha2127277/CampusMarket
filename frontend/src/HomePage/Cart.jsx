@@ -12,7 +12,12 @@ function Cart() {
     useEffect(() => {
         if (auth.currentUser) {
             const savedCart = localStorage.getItem(`cart_${auth.currentUser.uid}`);
-            if (savedCart) setCart(JSON.parse(savedCart));
+            if (savedCart) {
+                const parsedCart = JSON.parse(savedCart);
+                // فلترة السلة للتأكد إن مفيش منتجات مجانية (مكانها القلب مش هنا)
+                const paidItemsOnly = parsedCart.filter(item => Number(item.price) > 0);
+                setCart(paidItemsOnly);
+            }
         } else {
             navigate("/login"); 
         }
@@ -58,7 +63,7 @@ function Cart() {
                     sellerId: sId,
                     items: orderData.items,
                     totalAmount: orderData.total,
-                    status: "pending",
+                    status: "pending", // طلبات الشراء بتبدأ pending للموافقة
                     createdAt: serverTimestamp(),
                 });
             }));
@@ -66,9 +71,8 @@ function Cart() {
             setCart([]);
             localStorage.removeItem(`cart_${auth.currentUser.uid}`);
             
-            alert(`Success! 🎉\nYour order has been split into ${sellerIds.length} separate requests.`);
-            
-            navigate("/");
+            alert(`Success! 🎉\nYour orders have been sent to the sellers.`);
+            navigate("/my-requests", { state: { activeTab: 'orders' } }); // توجيهه لصفحة الطلبات قسم المشتريات
 
         } catch (error) {
             console.error("Error checkout:", error);
@@ -80,10 +84,8 @@ function Cart() {
 
     return (
         <div className="main-wrapper">
-            {/* الهيدر البسيط الخاص بالكارت */}
             <div className="cart-page-header">
-                
-                <h2>My Cart ({cart.length})</h2>
+                <h2>My Shopping Cart ({cart.length})</h2>
                 <div style={{ width: "40px" }}></div>
             </div>
 
@@ -112,7 +114,6 @@ function Cart() {
                             ))}
                         </div>
 
-                        {/* الفوتر اللي فيه الإجمالي والزرار */}
                         <div className="cart-footer">
                             <div className="total-section">
                                 <span>Total Amount:</span>
@@ -123,7 +124,7 @@ function Cart() {
                                 onClick={handleCheckout}
                                 disabled={loading}
                             >
-                                {loading ? "Processing..." : "Confirm Order"}
+                                {loading ? "Processing..." : "Confirm Purchase"}
                             </button>
                         </div>
                     </>
