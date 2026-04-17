@@ -9,9 +9,10 @@ import AddOrder from './AddOrder/AddOrder.jsx';
 import MyProducts from './myProduct/myProducts.jsx';
 import AllRequests from './Admin/AllRequests.jsx';
 import ProductDetails from './HomePage/ProductDetails.jsx'; 
-import MyRequests from './myRequestPage/MyRequests.jsx';
+import MyRequests from './myRequestPage/MyRequests.jsx'; // دي اللي هتبقى صفحة Grants
 import SellerRequests from './sellerRequestpage/SellerRequests.jsx';
 import Cart from './HomePage/Cart';
+
 function App() {
   const [role, setRole] = useState(localStorage.getItem("userRole") || "");
 
@@ -28,7 +29,6 @@ function App() {
 
   return (
     <Router>
-      {/* نبعت السيرش للنافبار */}
       <Navbar 
         role={role} 
         setRole={setRole} 
@@ -38,17 +38,31 @@ function App() {
 
       <Routes>
         <Route path="/" element={<Home role={role} searchQuery={searchQuery} />} />
+        <Route path="/home" element={<Home role={role} searchQuery={searchQuery} />} />
         <Route path="/login" element={<LoginPage setRole={setRole} />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forget-password" element={<ForgetPassword />} />
-        <Route path="/home" element={<Home role={role} searchQuery={searchQuery} />} />
+        
+        {/* الجزء الخاص بإضافة المنتجات وإدارة منتجاتي */}
         <Route path="/AddOrder" element={<AddOrder />} />
         <Route path="/my-product" element={<MyProducts />} />
+
+        {/* الجزء الخاص بالبيع والشراء التقليدي */}
+        <Route path="/cart" element={<Cart />} />
+
+        {/* --- الجزء التطوعي البروفيشنال --- */}
+        
+        {/* 1. صفحة الأدمن لمراجعة طلبات التطوع (Verification) */}
         <Route path="/all-requests" element={<AllRequests />} />
+
+        {/* 2. صفحة الطالب لمتابعة طلبات المساعدة (My Grants) */}
         <Route path="/my-requests" element={<MyRequests />} />
+
+        {/* 3. صفحة المتبرع لموافقة الطالب النهائي (Donation Approvals) */}
         <Route path="/seller-requests" element={<SellerRequests />} />
+
+        {/* تفاصيل المنتج */}
         <Route path="/product/:id" element={<ProductDetails />} />
-      <Route path="/cart" element={<Cart />} />
       </Routes>
     </Router>
   );
