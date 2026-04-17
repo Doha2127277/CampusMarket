@@ -1,144 +1,171 @@
-import React, { useState, useEffect } from 'react';
-import { db, auth } from '../firebase'; 
-import { collection, onSnapshot, query, where } from "firebase/firestore";
-import { useNavigate, useLocation } from "react-router-dom";
-import './Home.css';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { auth, db } from "../firebase"; 
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import "./Home.css";
 
-function Home() { 
-    const [products, setProducts] = useState([]);
-    const [filteredProducts, setFilteredProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [activeCategory, setActiveCategory] = useState("All");
-    
-    const [cart, setCart] = useState(() => {
-        const user = auth.currentUser;
-        const saved = user ? localStorage.getItem(`cart_${user.uid}`) : null;
-        return saved ? JSON.parse(saved) : [];
-    });
+function Navbar({ role, setRole }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [cartCount, setCartCount] = useState(0); 
+  const [pendingGrantsCount, setPendingGrantsCount] = useState(0); 
+  const navigate = useNavigate();
 
-    const navigate = useNavigate();
-    const location = useLocation();
-    const categories = ["All", "Engineering", "Medicine", "Business"];
-
-    useEffect(() => {
-        const q = query(collection(db, "products"), where("status", "==", "approved"));
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const productsArray = [];
-            querySnapshot.forEach((doc) => {
-                productsArray.push({ ...doc.data(), id: doc.id });
-            });
-            setProducts(productsArray);
-            setLoading(false);
-        });
-        return () => unsubscribe();
-    }, []);
-
-    useEffect(() => {
-        const syncCart = () => {
-            const user = auth.currentUser;
-            if (user) {
-                const savedCart = localStorage.getItem(`cart_${user.uid}`);
-                setCart(savedCart ? JSON.parse(savedCart) : []);
-            }
-        };
-
-        const unsubscribeAuth = auth.onAuthStateChanged((user) => {
-            syncCart();
-        });
-
-        window.addEventListener("storage", syncCart);
-        return () => {
-            unsubscribeAuth();
-            window.removeEventListener("storage", syncCart);
-        };
-    }, []);
-
-    useEffect(() => {
-        let result = products;
-        const searchFromNav = location.state?.search || "";
-        if (activeCategory !== "All") result = result.filter(p => p.category === activeCategory);
-        if (searchFromNav) {
-            result = result.filter(p => p.name.toLowerCase().includes(searchFromNav.toLowerCase()));
-        }
-        setFilteredProducts(result);
-    }, [products, activeCategory, location.state]);
-
-    const handleCartToggle = (e, product) => {
-        e.stopPropagation();
-        if (!auth.currentUser) {
-            navigate("/login");
-            return;
-        }
-
-        const cartKey = `cart_${auth.currentUser.uid}`;
-        const isInCart = cart.some(item => String(item.id) === String(product.id));
-        let updatedCart;
-
-        if (isInCart) {
-            updatedCart = cart.filter(item => String(item.id) !== String(product.id));
-        } else {
-            updatedCart = [...cart, product];
-        }
-
-        setCart(updatedCart);
-        localStorage.setItem(cartKey, JSON.stringify(updatedCart));
-        window.dispatchEvent(new Event("storage")); 
+  useEffect(() => {
+    // 1. تحديث عدد السلة من الـ LocalStorage (يسمع لأي تغيير في المتصفح)
+    const updateCart = () => {
+      if (auth.currentUser) {
+        const savedCart = localStorage.getItem(`cart_${auth.currentUser.uid}`);
+        setCartCount(savedCart ? JSON.parse(savedCart).length : 0);
+      } else {
+        setCartCount(0);
+      }
     };
 
-    if (loading) return <div className="loading-state">Loading...</div>;
+    // 2. مراقبة طلبات المساعدة (القلب) لحظياً من Firebase
+    let unsubscribeGrants = () => {};
 
-    return (
-        <div className="main-wrapper">
-            <div className="home-container">
-                <div className="filter-chips">
-                    {categories.map(cat => (
-                        <button 
-                            key={cat}
-                            className={`chip ${activeCategory === cat ? 'active' : ''}`}
-                            onClick={() => setActiveCategory(cat)}
-                        >
-                            {cat}
-                        </button>
-                    ))}
-                </div>
+    // مراقبة حالة المستخدم (للتأكد من وجود UID قبل بدء المراقبة)
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+      if (user) {
+        // نراقب كل الطلبات الخاصة بالمستخدم ليظهر الرقم فور الإضافة
+        const q = query(
+          collection(db, "volunteer_requests"),
+          where("requesterId", "==", user.uid)
+        );
 
-                <div className="products-grid">
-                    {filteredProducts.map((product) => {
-                        const isInCart = cart.some(item => String(item.id) === String(product.id));
-                        const isOwner = auth.currentUser && product.sellerId === auth.currentUser.uid;
+        unsubscribeGrants = onSnapshot(q, (snapshot) => {
+          setPendingGrantsCount(snapshot.size); 
+        });
+        updateCart();
+      } else {
+        setPendingGrantsCount(0);
+        setCartCount(0);
+        if (unsubscribeGrants) unsubscribeGrants();
+      }
+    });
 
-                        return (
-                            <div key={product.id} className="product-card" onClick={() => navigate(`/product/${product.id}`)}>
-                                <img src={product.photoURL} alt="" className="product-image" />
-                                <div className="product-info">
-                                    <div className="product-header">
-                                        <h3 className="product-name">{product.name}</h3>
-                                        <span className="product-price">{product.price} EGP</span>
-                                    </div>
-                                    <span className="product-category">{product.category}</span>
-                                    
-                                    <div className="card-actions-row">
-                                        {!isOwner && (
-                                            <button 
-                                                className={`cart-action-btn ${isInCart ? 'remove' : 'add'}`} 
-                                                style={{ 
-                                                    backgroundColor: isInCart ? '#ef4444' : '#10b981',
-                                                    color: 'white', border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer'
-                                                }}
-                                                onClick={(e) => handleCartToggle(e, product)}
-                                            >
-                                                {isInCart ? "Remove 🗑️" : "Add 🛒"}
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
+    // تحديث السلة عند تغيير الـ storage أو كل ثانية احتياطياً
+    window.addEventListener("storage", updateCart);
+    const interval = setInterval(updateCart, 1000); 
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", updateCart);
+      unsubscribeAuth();
+      if (unsubscribeGrants) unsubscribeGrants();
+    };
+  }, []);
+
+  const handleLinkClick = (path, state = {}) => {
+    const protectedPaths = ["/my-requests", "/seller-requests", "/my-product", "/AddOrder", "/all-requests"];
+    if (protectedPaths.includes(path) && !role) {
+      alert("Please login to access this page");
+      navigate("/login");
+    } else {
+      navigate(path, { state });
+    }
+    setMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    auth.signOut();
+    setRole("");
+    localStorage.removeItem("userRole");
+    navigate("/login");
+    setMenuOpen(false);
+  };
+
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearch(value);
+    navigate("/", { state: { search: value } });
+  };
+
+  const isAdmin = role?.toLowerCase() === "admin";
+
+  return (
+    <>
+      <nav className="navbar">
+        <div className="nav-container">
+          <div className="nav-left">
+            <h2 className="logo" onClick={() => navigate("/")}>CAMPUS.</h2>
+            <div className="search-navbar">
+              <span>🔍</span>
+              <input
+                type="text"
+                placeholder=" Search products..."
+                className="search-input-nav"
+                value={search}
+                onChange={handleSearch}
+              />
             </div>
+          </div>
+
+          <div className="nav-right">
+            {!isAdmin && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                
+                {/* أيقونة القلب - اللون الأخضر للرقم كما طلبت */}
+                <div 
+                  className="cart-icon-container" 
+                  onClick={() => navigate('/my-requests', { state: { activeTab: 'grants', fromHeart: true } })} 
+                  style={{ cursor: 'pointer', position: 'relative' }}
+                >
+                  <span style={{ fontSize: '1.5rem' }}>❤️</span>
+                  {pendingGrantsCount > 0 && (
+                    <span className="cart-badge" style={{ backgroundColor: '#10b981' }}>
+                      {pendingGrantsCount}
+                    </span>
+                  )}
+                </div>
+
+                {/* أيقونة السلة */}
+                <div className="cart-icon-container" onClick={() => navigate('/cart')} style={{ cursor: 'pointer', position: 'relative' }}>
+                  <span style={{ fontSize: '1.5rem' }}>🛒</span>
+                  {cartCount > 0 && (
+                    <span className="cart-badge">{cartCount}</span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {role ? (
+              <button className="login-btn" onClick={handleLogout}>Logout</button>
+            ) : (
+              <button className="login-btn" onClick={() => navigate("/login")}>Sign In</button>
+            )}
+
+            <button className="menu-toggle-btn" onClick={() => setMenuOpen(!menuOpen)}>
+              {menuOpen ? "✕" : "☰"}
+            </button>
+          </div>
         </div>
-    );
+      </nav>
+
+      {menuOpen && <div className="sidebar-overlay" onClick={() => setMenuOpen(false)}></div>}
+
+      <div className={`sidebar ${menuOpen ? "open" : ""}`}>
+        <button className="close-btn" onClick={() => setMenuOpen(false)}>✕</button>
+        <div className="sidebar-content">
+          <h3 className="sidebar-title">Menu</h3>
+          
+          {isAdmin ? (
+            <div className="sidebar-item" onClick={() => handleLinkClick("/all-requests")}>Admin Dashboard</div>
+          ) : (
+            <>
+              <div className="sidebar-item" onClick={() => handleLinkClick("/")}>Home</div>
+              <div className="sidebar-item" onClick={() => handleLinkClick("/my-product")}>My Inventory</div>
+              <div className="sidebar-item" onClick={() => handleLinkClick("/AddOrder")}>Post Item</div>
+              <div className="sidebar-item" onClick={() => handleLinkClick("/my-requests", { activeTab: 'grants', fromHeart: false })}>My Grants</div>
+              <div className="sidebar-item" onClick={() => handleLinkClick("/my-requests", { activeTab: 'orders' })}>My Orders</div>
+              <div className="sidebar-item" onClick={() => handleLinkClick("/seller-requests")}>Seller Requests</div>
+            </>
+          )}
+        </div>
+      </div>
+    </>
+  );
 }
 
-export default Home;
+export default Navbar;
