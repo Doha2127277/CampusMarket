@@ -1,99 +1,110 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../firebase'; 
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { useLocation } from 'react-router-dom';
 import './MyRequests.css';
 
 function MyRequests() {
+  const location = useLocation();
   const [orders, setOrders] = useState([]);
+  const [grants, setGrants] = useState([]);
   const [sellersNames, setSellersNames] = useState({});
   const [loading, setLoading] = useState(true);
-  const [commentText, setCommentText] = useState({});
+  
+  // الحالة الافتراضية للـ Tab
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'orders');
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    fetchAllData();
+    if (location.state?.activeTab) {
+        setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
 
-  const fetchOrders = async () => {
+  const fetchAllData = async () => {
     if (!auth.currentUser) return;
+    setLoading(true);
     try {
-      const q = query(collection(db, "orders"), where("buyerId", "==", auth.currentUser.uid));
-      const snapshot = await getDocs(q);
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      const sortedData = data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      // جلب الطلبات العادية
+      const qOrders = query(collection(db, "orders"), where("buyerId", "==", auth.currentUser.uid));
+      const orderSnap = await getDocs(qOrders);
+      const orderData = orderSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-      const sellerIds = [...new Set(sortedData.map(order => order.sellerId))];
+      // جلب طلبات المساعدة
+      const qGrants = query(collection(db, "volunteer_requests"), where("requesterId", "==", auth.currentUser.uid));
+      const grantSnap = await getDocs(qGrants);
+      const grantData = grantSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      setOrders(orderData.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
+      setGrants(grantData.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
+
+      const allSellers = [...new Set([...orderData.map(o => o.sellerId), ...grantData.map(g => g.sellerId)])];
       const namesMap = {};
-      await Promise.all(sellerIds.map(async (sId) => {
-        if (!sId || sId === "unknown") return;
+      await Promise.all(allSellers.map(async (sId) => {
+        if (!sId) return;
         const userDoc = await getDoc(doc(db, "users", sId));
-        if (userDoc.exists()) {
-          namesMap[sId] = userDoc.data().fullName || userDoc.data().name || "Seller";
-        }
+        if (userDoc.exists()) namesMap[sId] = userDoc.data().fullName || "Campus User";
       }));
-
       setSellersNames(namesMap);
-      setOrders(sortedData);
+
     } catch (error) {
-      console.error("Error fetching orders:", error);
+      console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddComment = async (orderId) => {
-    const text = commentText[orderId];
-    if (!text || text.trim() === "") return;
-
-    try {
-      const orderRef = doc(db, "orders", orderId);
-      const newComment = {
-        text: text.trim(),
-        senderId: auth.currentUser.uid,
-        senderRole: 'buyer',
-        createdAt: new Date().toISOString()
-      };
-
-      await updateDoc(orderRef, {
-        comments: arrayUnion(newComment)
-      });
-
-      setCommentText({ ...commentText, [orderId]: "" });
-      fetchOrders(); 
-    } catch (error) {
-      console.error("Error adding comment:", error);
+  const getStatusText = (status) => {
+    switch(status) {
+      case 'pending_admin': return 'Under Verification (Admin)';
+      case 'pending_donor': return 'Waiting Donor Approval';
+      case 'approved': return 'Grant Approved ✅';
+      default: return status || 'Pending';
     }
   };
+
+  // --- المنطق الجديد للفلترة ---
+  // لو المستخدم جاي من "القلب" (activeTab === 'grants')، هنعرض بس اللي مش approved
+  const displayedGrants = activeTab === 'grants' && location.state?.fromHeart 
+    ? grants.filter(g => g.status !== 'approved') 
+    : grants;
 
   if (loading) return <div className="loading-state">Loading...</div>;
 
   return (
     <div className="my-requests-container">
       <header className="main-header-web">
-        <h1 className="main-title-web">My Orders</h1>
+        <h1 className="main-title-web">Activity Center</h1>
+        <div className="tabs-container">
+          <button 
+            className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('orders')}
+          >
+            My Orders 🛒
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'grants' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('grants')}
+          >
+            {/* لو جاي من القلب نغير العنوان لـ Pending */}
+            {location.state?.fromHeart ? "Pending Grants ❤️" : "My Grants ❤️"}
+          </button>
+        </div>
       </header>
 
       <div className="orders-grid">
-        {orders.length === 0 ? (
-          <div className="no-orders">No orders yet.</div>
-        ) : (
-          orders.map((order) => (
+        {activeTab === 'orders' ? (
+          orders.length === 0 ? <div className="no-orders">No orders found.</div> : 
+          orders.map(order => (
             <div key={order.id} className="order-card-web">
-              
-              {/* Header: Date & Status */}
-              <div className={`status-bar ${order.status?.toLowerCase() || 'pending'}`}>
-                <div className="header-left">
-                   <span className="date-text">
-                    {order.createdAt?.seconds ? new Date(order.createdAt.seconds * 1000).toLocaleDateString() : "Recently"}
-                  </span>
-                </div>
+              {/* ... كود عرض الطلبات كما هو ... */}
+              <div className={`status-bar ${order.status?.toLowerCase()}`}>
+                <span className="date-text">{order.createdAt?.seconds ? new Date(order.createdAt.seconds * 1000).toLocaleDateString() : "Recently"}</span>
                 <span className="status-label">{order.status || "Pending"}</span>
               </div>
-
-              {/* Body: Products List */}
               <div className="order-items-list">
-                {order.items?.map((item, index) => (
-                  <div key={index} className="item-row">
+                {order.items?.map((item, i) => (
+                  <div key={i} className="item-row">
                     <img src={item.photoURL} alt={item.name} className="prod-img-web" />
                     <div className="item-info">
                       <h4 className="prod-name-web">{item.name}</h4>
@@ -102,43 +113,31 @@ function MyRequests() {
                   </div>
                 ))}
               </div>
-
-              {/* Chat Section: النسخة المطابقة للموبايل */}
-              <div className="chat-area-web">
-                <p className="chat-title-web">Chat with Seller</p>
-                <div className="messages-list-web">
-                  {order.comments && order.comments.length > 0 ? (
-                    order.comments.map((msg, i) => (
-                      <div key={i} className={`msg-bubble-web ${msg.senderId === auth.currentUser.uid ? 'me' : 'seller'}`}>
-                        <small className="sender-name-web">
-                          {msg.senderId === auth.currentUser.uid ? "Me" : (sellersNames[order.sellerId] || "Seller")}
-                        </small>
-                        <p className="msg-text-web">{msg.text}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="no-messages-web">No messages yet</p>
-                  )}
-                </div>
-                <div className="chat-input-web">
-                  <input 
-                    type="text" 
-                    placeholder="Write a message..." 
-                    value={commentText[order.id] || ""}
-                    onChange={(e) => setCommentText({ ...commentText, [order.id]: e.target.value })}
-                  />
-                  <button className="send-btn-web" onClick={() => handleAddComment(order.id)}>
-                    Send
-                  </button>
-                </div>
-              </div>
-
-              {/* Footer: Seller Name & Total Amount */}
               <div className="order-footer-web">
-                <div className="seller-info-web">
-                  <span className="seller-name-web-label">{sellersNames[order.sellerId] || order.sellerName || "Seller"}</span>
-                </div>
+                <span>Seller: {sellersNames[order.sellerId] || "Loading..."}</span>
                 <span className="total-amount-web">{order.totalAmount} EGP</span>
+              </div>
+            </div>
+          ))
+        ) : (
+          displayedGrants.length === 0 ? <div className="no-orders">No pending grants found.</div> : 
+          displayedGrants.map(grant => (
+            <div key={grant.id} className="order-card-web volunteer-card">
+              <div className={`status-bar ${grant.status}`}>
+                <span className="date-text">Request Date: {grant.createdAt?.seconds ? new Date(grant.createdAt.seconds * 1000).toLocaleDateString() : "Recently"}</span>
+                <span className="status-label volunteer-status">{getStatusText(grant.status)}</span>
+              </div>
+              <div className="item-row" style={{padding: '15px'}}>
+                 <div className="item-info">
+                    <h4 className="prod-name-web" style={{fontSize: '1.2rem'}}>{grant.productName}</h4>
+                    <p className="prod-price-web" style={{color: '#3b82f6'}}>Volunteer Item (Free)</p>
+                 </div>
+              </div>
+              <div className="order-footer-web">
+                <span>Donor: {sellersNames[grant.sellerId] || "Reviewing..."}</span>
+                {grant.status === 'approved' && (
+                  <button className="contact-btn-small">Contact Donor</button>
+                )}
               </div>
             </div>
           ))
