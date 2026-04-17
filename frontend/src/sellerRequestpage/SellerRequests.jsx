@@ -1,106 +1,88 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../firebase';
-import { collection, query, where, getDocs, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import './SellerRequests.css';
 
 function SellerRequests() {
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState([]); // المبيعات العادية
+  const [donations, setDonations] = useState([]); // طلبات التبرع (جديد)
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState({});
+  const [activeTab, setActiveTab] = useState('sales'); // التبديل بين المبيعات والتبرعات
 
   useEffect(() => {
-    fetchSellerOrders();
+    if (!auth.currentUser) return;
+
+    // 1. مراقبة المبيعات العادية (Orders)
+    const qOrders = query(collection(db, "orders"), where("sellerId", "==", auth.currentUser.uid));
+    const unsubscribeOrders = onSnapshot(qOrders, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setOrders(data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
+    });
+
+    // 2. مراقبة طلبات التبرع (Volunteer Requests) - اللي وافق عليها الأدمن بس
+    const qDonations = query(
+      collection(db, "volunteer_requests"), 
+      where("sellerId", "==", auth.currentUser.uid),
+      where("status", "==", "pending_donor")
+    );
+    const unsubscribeDonations = onSnapshot(qDonations, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setDonations(data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
+      setLoading(false);
+    });
+
+    return () => {
+      unsubscribeOrders();
+      unsubscribeDonations();
+    };
   }, []);
 
-  const fetchSellerOrders = async () => {
-    if (!auth.currentUser) return;
-    try {
-      const q = query(
-        collection(db, "orders"),
-        where("sellerId", "==", auth.currentUser.uid)
-      );
-      const snapshot = await getDocs(q);
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      const sortedData = data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setOrders(sortedData);
-    } catch (error) {
-      console.error("Error fetching seller orders: ", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // تحديث حالة مبيعات بفلوس
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      const orderRef = doc(db, "orders", orderId);
-      await updateDoc(orderRef, { status: newStatus });
-      alert(`Order has been ${newStatus}`);
-      fetchSellerOrders(); 
-    } catch (error) {
-      console.error("Error updating status:", error);
-    }
+      await updateDoc(doc(db, "orders", orderId), { status: newStatus });
+      alert(`Order ${newStatus}`);
+    } catch (error) { console.error(error); }
   };
 
-  const handleAddComment = async (orderId) => {
-    const text = commentText[orderId];
-    if (!text || text.trim() === "") return;
-
+  // تحديث حالة طلب تبرع (القرار النهائي للمتبرع)
+  const updateDonationStatus = async (reqId, newStatus) => {
     try {
-      const orderRef = doc(db, "orders", orderId);
-      const newComment = {
-        text: text.trim(),
-        senderId: auth.currentUser.uid,
-        senderRole: 'seller', 
-        createdAt: new Date().toISOString()
-      };
-
-      await updateDoc(orderRef, {
-        comments: arrayUnion(newComment)
-      });
-
-      setCommentText({ ...commentText, [orderId]: "" });
-      fetchSellerOrders();
-    } catch (error) {
-      console.error("Error adding comment:", error);
-    }
+      const status = newStatus === 'approved' ? 'approved' : 'rejected';
+      await updateDoc(doc(db, "volunteer_requests", reqId), { status: status });
+      alert(status === 'approved' ? "Donation Approved! Student can now contact you." : "Request Declined.");
+    } catch (error) { console.error(error); }
   };
 
-  if (loading) return <div className="loading-state">Loading Sales Data...</div>;
+  if (loading) return <div className="loading-state">Loading Manager...</div>;
 
   return (
     <div className="seller-requests-container">
       <header className="seller-header-web">
-        <h1 className="seller-title-web">Sales Manager</h1>
+        <h1 className="seller-title-web">Provider Dashboard</h1>
+        <div className="admin-tabs">
+            <button className={activeTab === 'sales' ? 'active' : ''} onClick={() => setActiveTab('sales')}>
+                Commercial Sales ({orders.length})
+            </button>
+            <button className={activeTab === 'donations' ? 'active' : ''} onClick={() => setActiveTab('donations')}>
+                Donation Approvals ({donations.length})
+            </button>
+        </div>
       </header>
 
       <div className="orders-grid-web">
-        {orders.length === 0 ? (
-          <div className="no-orders-web">No orders received yet.</div>
-        ) : (
+        {activeTab === 'sales' ? (
+          orders.length === 0 ? <div className="no-orders-web">No sales yet.</div> :
           orders.map((order) => (
             <div key={order.id} className="seller-horizontal-card">
-              
               <div className="order-info-section">
-                <div className={`status-badge-web ${order.status?.toLowerCase() || 'pending'}`}>
-                  {order.status || "Pending"}
-                </div>
-                
+                <div className={`status-badge-web ${order.status?.toLowerCase()}`}>{order.status || "Pending"}</div>
                 <p className="buyer-name-web">Buyer: {order.buyerName || "Student"}</p>
-                <p className="order-date-web">
-                  {order.createdAt?.seconds ? new Date(order.createdAt.seconds * 1000).toLocaleString() : "Recently"}
-                </p>
-
                 <div className="products-mini-list">
-                  {order.items?.map((prod, index) => (
-                    <div key={index} className="product-row-web">
-                      {/* تعديل سطر الصورة لضمان القراءة الصحيحة */}
-                      <img 
-                        src={prod.photoURL || prod.image || prod.imageUrl || "https://via.placeholder.com/150?text=No+Image"} 
-                        alt={prod.name} 
-                        className="mini-prod-img" 
-                        onError={(e) => { e.target.src = "https://via.placeholder.com/150?text=Error"; }}
-                      />
+                  {order.items?.map((prod, i) => (
+                    <div key={i} className="product-row-web">
+                      <img src={prod.photoURL} alt="" className="mini-prod-img" />
                       <div className="mini-prod-info">
                         <span className="mini-name">{prod.name}</span>
                         <span className="mini-price">{prod.price} EGP</span>
@@ -108,42 +90,33 @@ function SellerRequests() {
                     </div>
                   ))}
                 </div>
-
-                {(!order.status || order.status === "pending") && (
+                {order.status === "pending" && (
                   <div className="seller-actions">
                     <button className="approve-btn-web" onClick={() => updateOrderStatus(order.id, "approved")}>Approve</button>
                     <button className="reject-btn-web" onClick={() => updateOrderStatus(order.id, "rejected")}>Reject</button>
                   </div>
                 )}
-
-                <div className="income-footer">
-                  <span>Total Income:</span>
-                  <strong>{order.totalAmount} EGP</strong>
+              </div>
+            </div>
+          ))
+        ) : (
+          // عرض طلبات التبرع (Professional View)
+          donations.length === 0 ? <div className="no-orders-web">No pending donations to approve.</div> :
+          donations.map((req) => (
+            <div key={req.id} className="seller-horizontal-card donation-card-style">
+              <div className="order-info-section">
+                <div className="status-badge-web verified">Verified by Admin ✅</div>
+                <h3 className="donation-title">Item: {req.productName}</h3>
+                <p className="buyer-name-web">Requested by: <strong>{req.requesterName}</strong></p>
+                <p className="order-date-web">The admin has verified this student's eligibility.</p>
+                
+                <div className="seller-actions" style={{marginTop: '20px'}}>
+                  <button className="approve-btn-web" style={{backgroundColor: '#3b82f6'}} onClick={() => updateDonationStatus(req.id, "approved")}>
+                    Confirm Donation 🎁
+                  </button>
+                  <button className="reject-btn-web" onClick={() => updateDonationStatus(req.id, "rejected")}>Decline</button>
                 </div>
               </div>
-
-              <div className="seller-chat-section">
-                <p className="chat-label-web">Chat with Buyer</p>
-                <div className="chat-messages-web">
-                  {order.comments?.map((c, i) => (
-                    <div key={i} className={`bubble-web ${c.senderId === auth.currentUser.uid ? 'me' : 'buyer'}`}>
-                      <small>{c.senderId === auth.currentUser.uid ? "Me (Seller)" : "Buyer"}</small>
-                      <p>{c.text}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="chat-input-row">
-                  <input 
-                    type="text" 
-                    placeholder="Reply to buyer..." 
-                    value={commentText[order.id] || ""}
-                    onChange={(e) => setCommentText({ ...commentText, [order.id]: e.target.value })}
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddComment(order.id)}
-                  />
-                  <button onClick={() => handleAddComment(order.id)}>Send</button>
-                </div>
-              </div>
-
             </div>
           ))
         )}
