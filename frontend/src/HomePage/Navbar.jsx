@@ -12,7 +12,7 @@ function Navbar({ role, setRole }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 1. تحديث عدد السلة من الـ LocalStorage (يسمع لأي تغيير في المتصفح)
+    // 1. تحديث عدد السلة من الـ LocalStorage
     const updateCart = () => {
       if (auth.currentUser) {
         const savedCart = localStorage.getItem(`cart_${auth.currentUser.uid}`);
@@ -25,10 +25,8 @@ function Navbar({ role, setRole }) {
     // 2. مراقبة طلبات المساعدة (القلب) لحظياً من Firebase
     let unsubscribeGrants = () => {};
 
-    // مراقبة حالة المستخدم (للتأكد من وجود UID قبل بدء المراقبة)
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
       if (user) {
-        // نراقب كل الطلبات الخاصة بالمستخدم ليظهر الرقم فور الإضافة
         const q = query(
           collection(db, "volunteer_requests"),
           where("requesterId", "==", user.uid)
@@ -45,7 +43,6 @@ function Navbar({ role, setRole }) {
       }
     });
 
-    // تحديث السلة عند تغيير الـ storage أو كل ثانية احتياطياً
     window.addEventListener("storage", updateCart);
     const interval = setInterval(updateCart, 1000); 
 
@@ -103,32 +100,31 @@ function Navbar({ role, setRole }) {
           </div>
 
           <div className="nav-right">
-            {!isAdmin && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                
-                {/* أيقونة القلب - اللون الأخضر للرقم كما طلبت */}
-                <div 
-                  className="cart-icon-container" 
-                  onClick={() => navigate('/my-requests', { state: { activeTab: 'grants', fromHeart: true } })} 
-                  style={{ cursor: 'pointer', position: 'relative' }}
-                >
-                  <span style={{ fontSize: '1.5rem' }}>❤️</span>
-                  {pendingGrantsCount > 0 && (
-                    <span className="cart-badge" style={{ backgroundColor: '#10b981' }}>
-                      {pendingGrantsCount}
-                    </span>
-                  )}
-                </div>
-
-                {/* أيقونة السلة */}
-                <div className="cart-icon-container" onClick={() => navigate('/cart')} style={{ cursor: 'pointer', position: 'relative' }}>
-                  <span style={{ fontSize: '1.5rem' }}>🛒</span>
-                  {cartCount > 0 && (
-                    <span className="cart-badge">{cartCount}</span>
-                  )}
-                </div>
+            {/* تم إظهار الأيقونات للجميع (بما فيهم الأدمن) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              
+              {/* أيقونة القلب */}
+              <div 
+                className="cart-icon-container" 
+                onClick={() => navigate('/my-requests', { state: { activeTab: 'grants', fromHeart: true } })} 
+                style={{ cursor: 'pointer', position: 'relative' }}
+              >
+                <span style={{ fontSize: '1.5rem' }}>❤️</span>
+                {pendingGrantsCount > 0 && (
+                  <span className="cart-badge" style={{ backgroundColor: '#10b981' }}>
+                    {pendingGrantsCount}
+                  </span>
+                )}
               </div>
-            )}
+
+              {/* أيقونة السلة */}
+              <div className="cart-icon-container" onClick={() => navigate('/cart')} style={{ cursor: 'pointer', position: 'relative' }}>
+                <span style={{ fontSize: '1.5rem' }}>🛒</span>
+                {cartCount > 0 && (
+                  <span className="cart-badge">{cartCount}</span>
+                )}
+              </div>
+            </div>
 
             {role ? (
               <button className="login-btn" onClick={handleLogout}>Logout</button>
@@ -150,18 +146,21 @@ function Navbar({ role, setRole }) {
         <div className="sidebar-content">
           <h3 className="sidebar-title">Menu</h3>
           
-          {isAdmin ? (
-            <div className="sidebar-item" onClick={() => handleLinkClick("/all-requests")}>Admin Dashboard</div>
-          ) : (
-            <>
-              <div className="sidebar-item" onClick={() => handleLinkClick("/")}>Home</div>
-              <div className="sidebar-item" onClick={() => handleLinkClick("/my-product")}>My Inventory</div>
-              <div className="sidebar-item" onClick={() => handleLinkClick("/AddOrder")}>Post Item</div>
-              <div className="sidebar-item" onClick={() => handleLinkClick("/my-requests", { activeTab: 'grants', fromHeart: false })}>My Grants</div>
-              <div className="sidebar-item" onClick={() => handleLinkClick("/my-requests", { activeTab: 'orders' })}>My Orders</div>
-              <div className="sidebar-item" onClick={() => handleLinkClick("/seller-requests")}>Seller Requests</div>
-            </>
+          {/* الروابط الأساسية تظهر للكل */}
+          <div className="sidebar-item" onClick={() => handleLinkClick("/")}>Home</div>
+          
+          {/* يظهر خيار الأدمن فقط لو كان المستخدم Admin مع الاحتفاظ بالباقي */}
+          {isAdmin && (
+            <div className="sidebar-item" style={{ color: '#10b981', fontWeight: 'bold' }} onClick={() => handleLinkClick("/all-requests")}>
+              Admin Dashboard
+            </div>
           )}
+
+          <div className="sidebar-item" onClick={() => handleLinkClick("/my-product")}>My Inventory</div>
+          <div className="sidebar-item" onClick={() => handleLinkClick("/AddOrder")}>Post Item</div>
+          <div className="sidebar-item" onClick={() => handleLinkClick("/my-requests", { activeTab: 'grants', fromHeart: false })}>My Grants</div>
+          <div className="sidebar-item" onClick={() => handleLinkClick("/my-requests", { activeTab: 'orders' })}>My Orders</div>
+          <div className="sidebar-item" onClick={() => handleLinkClick("/seller-requests")}>Seller Requests</div>
         </div>
       </div>
     </>
