@@ -1,7 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebase'; 
-import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { 
+  doc, 
+  getDoc, 
+  addDoc, 
+  collection, 
+  serverTimestamp, 
+  query, 
+  where, 
+  getDocs, 
+  deleteDoc 
+} from 'firebase/firestore';
 
 function ProductDetails() {
   const { id } = useParams(); 
@@ -9,6 +19,7 @@ function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isInCart, setIsInCart] = useState(false);
+  const [isRequested, setIsRequested] = useState(false); 
   const [sellerName, setSellerName] = useState("...");
   const [cart, setCart] = useState([]);
 
@@ -36,6 +47,16 @@ function ProductDetails() {
             const savedCart = JSON.parse(localStorage.getItem(cartKey)) || [];
             setCart(savedCart);
             setIsInCart(savedCart.some(item => item.id === productData.id));
+
+            const q = query(
+              collection(db, "volunteer_requests"),
+              where("productId", "==", id),
+              where("requesterId", "==", auth.currentUser.uid)
+            );
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+              setIsRequested(true);
+            }
           }
         }
       } catch (error) {
@@ -46,7 +67,6 @@ function ProductDetails() {
     getProductData();
   }, [id]);
 
-  // --- الجزء الخاص بالبيع (السلة العادية) ---
   const handleToggleCart = () => {
     if (!auth.currentUser) return alert("Please log in first!");
 
@@ -65,25 +85,39 @@ function ProductDetails() {
     window.dispatchEvent(new Event("storage"));
   };
 
-  // --- الجزء الخاص بالتطوع (الطلب البروفيشنال) ---
   const handleVolunteerRequest = async () => {
     if (!auth.currentUser) return alert("Please log in first!");
 
     try {
-      const requestData = {
-        productId: product.id,
-        productName: product.name,
-        requesterId: auth.currentUser.uid,
-        requesterName: auth.currentUser.displayName || "Student",
-        sellerId: product.sellerId || product.userId || product.uid,
-        status: "pending_admin", // البداية عند الأدمن للمراجعة
-        createdAt: serverTimestamp(),
-      };
+      if (isRequested) {
+        const q = query(
+          collection(db, "volunteer_requests"),
+          where("productId", "==", id),
+          where("requesterId", "==", auth.currentUser.uid)
+        );
+        const querySnapshot = await getDocs(q);
+        const deletePromises = querySnapshot.docs.map(docSnap => deleteDoc(docSnap.ref));
+        await Promise.all(deletePromises);
+        
+        setIsRequested(false);
+        alert("Removed from requests successfully! 🗑️");
+      } else {
+        const requestData = {
+          productId: id,
+          productName: product.name,
+          requesterId: auth.currentUser.uid,
+          requesterName: auth.currentUser.displayName || "Student",
+          sellerId: product.sellerId || product.userId || product.uid,
+          status: "pending_admin",
+          createdAt: serverTimestamp(),
+        };
 
-      await addDoc(collection(db, "volunteer_requests"), requestData);
-      alert("Request Sent! It's now under Verification by Admin. ✨");
+        await addDoc(collection(db, "volunteer_requests"), requestData);
+        setIsRequested(true);
+        alert("Request Sent! Under Verification. ✨");
+      }
     } catch (error) {
-      console.error("Error sending volunteer request:", error);
+      console.error("Error handling request:", error);
       alert("Something went wrong, try again.");
     }
   };
@@ -92,7 +126,6 @@ function ProductDetails() {
   if (!product) return <div style={{padding: '50px', textAlign: 'center'}}>Product not found!</div>;
 
   const isOwner = auth.currentUser?.uid === (product.sellerId || product.userId || product.uid);
-
   const formattedDate = product.createdAt?.seconds 
     ? new Date(product.createdAt.seconds * 1000).toLocaleDateString() 
     : "Recently";
@@ -120,7 +153,6 @@ function ProductDetails() {
 
         <div style={styles.infoSection}>
           <h1 style={styles.title}>{product.name}</h1>
-          
           <div style={styles.priceRow}>
              <span style={styles.price}>{product.price === 0 ? "Free" : `${product.price} EGP`}</span>
              <span style={styles.categoryBadge}>{product.category}</span>
@@ -140,26 +172,25 @@ function ProductDetails() {
              <p style={styles.descContent}>{product.description || "No description provided."}</p>
           </div>
 
-          {/* التحكم في الأزرار بناءً على السعر والملكية */}
           {isOwner ? (
-            <button 
-              style={{...styles.cartBtn, backgroundColor: '#94a3b8', cursor: 'not-allowed'}}
-              disabled
-            >
+            <button style={{...styles.cartBtn, backgroundColor: '#94a3b8', cursor: 'not-allowed'}} disabled>
               Your Product (Owned) ✨
             </button>
           ) : (
             <>
               {product.price === 0 ? (
-                /* زرار الجزء التطوعي */
+                /* ✅ زرار التبرع: أحمر واسمه Remove عند الطلب */
                 <button 
-                  style={{...styles.cartBtn, backgroundColor: '#3b82f6'}} 
+                  style={{
+                    ...styles.cartBtn, 
+                    backgroundColor: isRequested ? '#ef4444' : '#3b82f6',
+                    cursor: 'pointer'
+                  }} 
                   onClick={handleVolunteerRequest}
                 >
-                  Request Assistance 🤝
+                  {isRequested ? "Remove from Requests 🗑️" : "Request Assistance 🤝"}
                 </button>
               ) : (
-                /* زرار السلة للمنتجات المدفوعة */
                 <button 
                   style={{...styles.cartBtn, backgroundColor: isInCart ? '#ef4444' : '#10b981'}}
                   onClick={handleToggleCart}
