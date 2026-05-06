@@ -5,7 +5,7 @@ import './SellerRequests.css';
 
 function SellerRequests() {
   const [orders, setOrders] = useState([]); // المبيعات العادية
-  const [donations, setDonations] = useState([]); // طلبات التبرع (جديد)
+  const [donations, setDonations] = useState([]); // طلبات التبرع
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState({});
   const [activeTab, setActiveTab] = useState('sales'); // التبديل بين المبيعات والتبرعات
@@ -20,11 +20,11 @@ function SellerRequests() {
       setOrders(data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
     });
 
-    // 2. مراقبة طلبات التبرع (Volunteer Requests) - اللي وافق عليها الأدمن بس
+    // 2. مراقبة طلبات التبرع (Volunteer Requests)
     const qDonations = query(
       collection(db, "volunteer_requests"), 
       where("sellerId", "==", auth.currentUser.uid),
-      where("status", "==", "pending_donor")
+      where("status", "in", ["pending_donor", "approved", "rejected"])
     );
     const unsubscribeDonations = onSnapshot(qDonations, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -38,7 +38,61 @@ function SellerRequests() {
     };
   }, []);
 
-  // تحديث حالة مبيعات بفلوس
+  // دالة إرسال التعليق (المنطق البرمجي)
+  const handleAddComment = async (id, collectionName) => {
+    const text = commentText[id];
+    if (!text || text.trim() === "") return;
+
+    try {
+      const docRef = doc(db, collectionName, id);
+      const newComment = {
+        text: text.trim(),
+        senderId: auth.currentUser.uid,
+        senderRole: 'seller', 
+        createdAt: new Date().toISOString()
+      };
+
+      await updateDoc(docRef, {
+        comments: arrayUnion(newComment)
+      });
+
+      // مسح النص بعد الإرسال
+      setCommentText(prev => ({ ...prev, [id]: "" }));
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
+  };
+
+  // وظيفة عرض الشات (UI) باستخدام الكلاسات الأصلية
+  const RenderChat = (item, collectionName) => (
+    <div className="chat-area-web">
+      <p className="chat-title-web">Chat with Student</p>
+      <div className="messages-list-web">
+        {item.comments?.map((c, i) => (
+          <div key={i} className={`msg-bubble-web ${c.senderId === auth.currentUser.uid ? 'me' : 'seller'}`}>
+            <span className="sender-name-web">{c.senderId === auth.currentUser.uid ? "Me" : "Student"}</span>
+            <p className="msg-text-web">{c.text}</p>
+          </div>
+        ))}
+      </div>
+      <div className="chat-input-web">
+        <input 
+          type="text" 
+          placeholder="Type a message..." 
+          value={commentText[item.id] || ""}
+          onChange={(e) => {
+            const val = e.target.value;
+            setCommentText(prev => ({ ...prev, [item.id]: val }));
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleAddComment(item.id, collectionName);
+          }}
+        />
+        <button className="send-btn-web" onClick={() => handleAddComment(item.id, collectionName)}>Send</button>
+      </div>
+    </div>
+  );
+
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       await updateDoc(doc(db, "orders", orderId), { status: newStatus });
@@ -46,12 +100,11 @@ function SellerRequests() {
     } catch (error) { console.error(error); }
   };
 
-  // تحديث حالة طلب تبرع (القرار النهائي للمتبرع)
   const updateDonationStatus = async (reqId, newStatus) => {
     try {
       const status = newStatus === 'approved' ? 'approved' : 'rejected';
       await updateDoc(doc(db, "volunteer_requests", reqId), { status: status });
-      alert(status === 'approved' ? "Donation Approved! Student can now contact you." : "Request Declined.");
+      alert(status === 'approved' ? "Donation Approved!" : "Request Declined.");
     } catch (error) { console.error(error); }
   };
 
@@ -90,8 +143,12 @@ function SellerRequests() {
                     </div>
                   ))}
                 </div>
+
+                {/* شات المبيعات */}
+                {RenderChat(order, "orders")}
+
                 {order.status === "pending" && (
-                  <div className="seller-actions">
+                  <div className="seller-actions" style={{marginTop: '15px'}}>
                     <button className="approve-btn-web" onClick={() => updateOrderStatus(order.id, "approved")}>Approve</button>
                     <button className="reject-btn-web" onClick={() => updateOrderStatus(order.id, "rejected")}>Reject</button>
                   </div>
@@ -100,7 +157,6 @@ function SellerRequests() {
             </div>
           ))
         ) : (
-          // عرض طلبات التبرع (Professional View)
           donations.length === 0 ? <div className="no-orders-web">No pending donations to approve.</div> :
           donations.map((req) => (
             <div key={req.id} className="seller-horizontal-card donation-card-style">
@@ -108,14 +164,18 @@ function SellerRequests() {
                 <div className="status-badge-web verified">Verified by Admin ✅</div>
                 <h3 className="donation-title">Item: {req.productName}</h3>
                 <p className="buyer-name-web">Requested by: <strong>{req.requesterName}</strong></p>
-                <p className="order-date-web">The admin has verified this student's eligibility.</p>
                 
-                <div className="seller-actions" style={{marginTop: '20px'}}>
-                  <button className="approve-btn-web" style={{backgroundColor: '#3b82f6'}} onClick={() => updateDonationStatus(req.id, "approved")}>
-                    Confirm Donation 🎁
-                  </button>
-                  <button className="reject-btn-web" onClick={() => updateDonationStatus(req.id, "rejected")}>Decline</button>
-                </div>
+                {/* شات التبرعات */}
+                {RenderChat(req, "volunteer_requests")}
+
+                {req.status === "pending_donor" && (
+                  <div className="seller-actions" style={{marginTop: '20px'}}>
+                    <button className="approve-btn-web" style={{backgroundColor: '#3b82f6'}} onClick={() => updateDonationStatus(req.id, "approved")}>
+                      Confirm Donation 🎁
+                    </button>
+                    <button className="reject-btn-web" onClick={() => updateDonationStatus(req.id, "rejected")}>Decline</button>
+                  </div>
+                )}
               </div>
             </div>
           ))
