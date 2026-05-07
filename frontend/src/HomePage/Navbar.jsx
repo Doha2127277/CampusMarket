@@ -116,6 +116,44 @@ function Navbar({ role, setRole }) {
                   </span>
                 )}
               </div>
+              {/* Profile */}
+{auth.currentUser && (
+  <div
+    onClick={() => navigate("/", { state: { openProfile: true } })}
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
+      cursor: "pointer"
+    }}
+  >
+    <span
+      style={{
+        fontSize: "15px",
+        fontWeight: "600",
+        color: "#ffffff",
+        whiteSpace: "nowrap"
+      }}
+    >
+      Hi, {auth.currentUser.displayName || "User"}
+    </span>
+
+    <img
+      src={
+        auth.currentUser.photoURL ||
+        "https://via.placeholder.com/35"
+      }
+      alt="profile"
+      style={{
+        width: "38px",
+        height: "38px",
+        borderRadius: "50%",
+        objectFit: "cover",
+        border: "2px solid #3b82f6"
+      }}
+    />
+  </div>
+)}
 
               {/* أيقونة السلة */}
               <div className="cart-icon-container" onClick={() => navigate('/cart')} style={{ cursor: 'pointer', position: 'relative' }}>
@@ -125,6 +163,7 @@ function Navbar({ role, setRole }) {
                 )}
               </div>
             </div>
+            
 
             {role ? (
               <button className="login-btn" onClick={handleLogout}>Logout</button>
