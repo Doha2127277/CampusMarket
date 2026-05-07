@@ -1,121 +1,150 @@
+/* AllRequests.css */
 body {
     margin: 0;
     padding: 0;
-    background-color: #f8fafc; /* Light grayish-blue background for the page */
+    background-color: #f8fafc;
 }
 
 .admin-container {
-    width: 100vw;
+    width: 100%;
     min-height: 100vh;
-    padding: 40px 0;
+    padding: 40px 20px;
     font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
 }
 
 .admin-header {
-    width: 90%;
-    max-width: 1400px;
-    margin: 0 auto 40px auto;
-    border-bottom: 2px solid #e2e8f0;
-    padding-bottom: 20px;
+    max-width: 1200px;
+    margin: 0 auto 30px auto;
 }
 
 .admin-title {
     color: #1e293b;
     font-size: 28px;
     font-weight: 800;
-    margin: 0;
+    margin-bottom: 20px;
 }
 
-.requests-list {
-    width: 90%;
-    max-width: 1400px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
+.request-card-admin {
+    max-width: 1200px;
+    margin: 0 auto 15px auto;
+    background: #ffffff;
+    border-left: 5px solid #2563eb; 
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .request-row {
-    background: #ffffff;
-    /* Light blue border on the left to match the logo */
-    border-left: 5px solid #38bdf8; 
-    padding: 20px 30px;
-    border-radius: 12px;
-    /* Soft shadow for depth */
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: all 0.3s ease;
 }
 
-.request-row:hover {
-    /* Very light blue tint on hover */
-    background: #f0f9ff; 
-    transform: translateX(5px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+.product-img-admin {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-right: 15px;
 }
 
 .request-info {
     display: flex;
-    gap: 45px;
+    gap: 30px;
     align-items: center;
     flex: 1;
 }
 
 .product-name {
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 700;
-    color: #2563eb; /* Match the primary blue */
-    min-width: 150px;
+    color: #1e293b;
 }
 
-.info-group {
-    display: flex;
-    flex-direction: column;
-}
-
-.info-label {
+.info-group span {
     font-size: 11px;
     color: #94a3b8;
     text-transform: uppercase;
     font-weight: 700;
-    letter-spacing: 0.5px;
-    margin-bottom: 4px;
-}
-
-.info-value {
-    font-size: 14px;
-    color: #334155;
-    font-weight: 600;
-}
-
-.button-group {
-    display: flex;
-    gap: 12px;
+    display: block;
 }
 
 .btn-approve {
     background-color: #10b981;
     color: white;
     border: none;
-    padding: 10px 22px;
+    padding: 10px 20px;
     border-radius: 8px;
     font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
 }
 
-.btn-reject {
-    background-color: #ef4444;
+.admin-chat-box {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.messages-list-web {
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.msg-bubble-web {
+    padding: 8px 14px;
+    border-radius: 12px;
+    max-width: 70%;
+    font-size: 14px;
+}
+
+.msg-bubble-web.me {
+    align-self: flex-end;
+    background: #2563eb;
+    color: white;
+}
+
+.msg-bubble-web.student {
+    align-self: flex-start;
+    background: #f1f5f9;
+    color: #334155;
+}
+
+.sender-name-web {
+    font-size: 10px;
+    font-weight: 800;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.chat-input-web {
+    display: flex;
+    gap: 10px;
+}
+
+.chat-input-web input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.send-btn-web {
+    background: #2563eb;
     color: white;
     border: none;
-    padding: 10px 22px;
+    padding: 0 20px;
     border-radius: 8px;
-    font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+    font-weight: bold;
 }
 
-.btn-approve:hover { background-color: #059669; }
-.btn-reject:hover { background-color: #dc2626; }
+.status-text {
+    text-align: center;
+    color: #64748b;
+    padding: 40px;
+}

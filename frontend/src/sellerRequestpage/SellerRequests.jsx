@@ -4,185 +4,96 @@ import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion } from
 import './SellerRequests.css';
 
 function SellerRequests() {
-  const [orders, setOrders] = useState([]); // المبيعات العادية
-  const [donations, setDonations] = useState([]); // طلبات التبرع
-  const [loading, setLoading] = useState(true);
-  const [commentText, setCommentText] = useState({});
-  const [activeTab, setActiveTab] = useState('sales'); // التبديل بين المبيعات والتبرعات
+    const [orders, setOrders] = useState([]);
+    const [donations, setDonations] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [commentText, setCommentText] = useState({});
+    const [activeTab, setActiveTab] = useState('sales');
 
-  useEffect(() => {
-    if (!auth.currentUser) return;
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const unsubOrders = onSnapshot(query(collection(db, "orders"), where("sellerId", "==", auth.currentUser.uid)), (snap) => {
+            setOrders(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        });
 
-    // 1. مراقبة المبيعات العادية (Orders)
-    const qOrders = query(collection(db, "orders"), where("sellerId", "==", auth.currentUser.uid));
-    const unsubscribeOrders = onSnapshot(qOrders, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setOrders(data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
-    });
+        const unsubDonations = onSnapshot(query(collection(db, "volunteer_requests"), where("sellerId", "==", auth.currentUser.uid), where("status", "in", ["approved", "rejected"])), (snap) => {
+            setDonations(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            setLoading(false);
+        });
+        return () => { unsubOrders(); unsubDonations(); };
+    }, []);
 
-    // 2. مراقبة طلبات التبرع (Volunteer Requests)
-    const qDonations = query(
-      collection(db, "volunteer_requests"), 
-      where("sellerId", "==", auth.currentUser.uid),
-      where("status", "in", ["pending_donor", "approved", "rejected"])
-    );
-    const unsubscribeDonations = onSnapshot(qDonations, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setDonations(data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
-      setLoading(false);
-    });
-
-    return () => {
-      unsubscribeOrders();
-      unsubscribeDonations();
+    const handleAddComment = async (id, collectionName) => {
+        if (!commentText[id]?.trim()) return;
+        try {
+            await updateDoc(doc(db, collectionName, id), {
+                comments: arrayUnion({
+                    text: commentText[id].trim(),
+                    senderId: auth.currentUser.uid,
+                    senderRole: 'seller',
+                    stage: collectionName === 'volunteer_requests' ? 'donor_delivery' : 'sales',
+                    createdAt: new Date().toISOString()
+                })
+            });
+            setCommentText(prev => ({ ...prev, [id]: "" }));
+        } catch (error) { console.error(error); }
     };
-  }, []);
 
-  // دالة إرسال التعليق (المنطق البرمجي)
-  const handleAddComment = async (id, collectionName) => {
-    const text = commentText[id];
-    if (!text || text.trim() === "") return;
+    if (loading) return <div className="loading">Loading...</div>;
 
-    try {
-      const docRef = doc(db, collectionName, id);
-      const newComment = {
-        text: text.trim(),
-        senderId: auth.currentUser.uid,
-        senderRole: 'seller', 
-        createdAt: new Date().toISOString()
-      };
-
-      await updateDoc(docRef, {
-        comments: arrayUnion(newComment)
-      });
-
-      // مسح النص بعد الإرسال
-      setCommentText(prev => ({ ...prev, [id]: "" }));
-    } catch (error) {
-      console.error("Error adding comment:", error);
-    }
-  };
-
-  // وظيفة عرض الشات (UI) باستخدام الكلاسات الأصلية
-  const RenderChat = (item, collectionName) => (
-    <div className="chat-area-web">
-      <p className="chat-title-web">Chat with Student</p>
-      <div className="messages-list-web">
-        {item.comments?.map((c, i) => (
-          <div key={i} className={`msg-bubble-web ${c.senderId === auth.currentUser.uid ? 'me' : 'seller'}`}>
-            <span className="sender-name-web">{c.senderId === auth.currentUser.uid ? "Me" : "Student"}</span>
-            <p className="msg-text-web">{c.text}</p>
-          </div>
-        ))}
-      </div>
-      <div className="chat-input-web">
-        <input 
-          type="text" 
-          placeholder="Type a message..." 
-          value={commentText[item.id] || ""}
-          onChange={(e) => {
-            const val = e.target.value;
-            setCommentText(prev => ({ ...prev, [item.id]: val }));
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleAddComment(item.id, collectionName);
-          }}
-        />
-        <button className="send-btn-web" onClick={() => handleAddComment(item.id, collectionName)}>Send</button>
-      </div>
-    </div>
-  );
-
-  const updateOrderStatus = async (orderId, newStatus) => {
-    try {
-      await updateDoc(doc(db, "orders", orderId), { status: newStatus });
-      alert(`Order ${newStatus}`);
-    } catch (error) { console.error(error); }
-  };
-
-  const updateDonationStatus = async (reqId, newStatus) => {
-    try {
-      const status = newStatus === 'approved' ? 'approved' : 'rejected';
-      await updateDoc(doc(db, "volunteer_requests", reqId), { status: status });
-      alert(status === 'approved' ? "Donation Approved!" : "Request Declined.");
-    } catch (error) { console.error(error); }
-  };
-
-  if (loading) return <div className="loading-state">Loading Manager...</div>;
-
-  return (
-    <div className="seller-requests-container">
-      <header className="seller-header-web">
-        <h1 className="seller-title-web">Provider Dashboard</h1>
-        <div className="admin-tabs">
-            <button className={activeTab === 'sales' ? 'active' : ''} onClick={() => setActiveTab('sales')}>
-                Commercial Sales ({orders.length})
-            </button>
-            <button className={activeTab === 'donations' ? 'active' : ''} onClick={() => setActiveTab('donations')}>
-                Donation Approvals ({donations.length})
-            </button>
-        </div>
-      </header>
-
-      <div className="orders-grid-web">
-        {activeTab === 'sales' ? (
-          orders.length === 0 ? <div className="no-orders-web">No sales yet.</div> :
-          orders.map((order) => (
-            <div key={order.id} className="seller-horizontal-card">
-              <div className="order-info-section">
-                <div className={`status-badge-web ${order.status?.toLowerCase()}`}>{order.status || "Pending"}</div>
-                <p className="buyer-name-web">Buyer: {order.buyerName || "Student"}</p>
-                <div className="products-mini-list">
-                  {order.items?.map((prod, i) => (
-                    <div key={i} className="product-row-web">
-                      <img src={prod.photoURL} alt="" className="mini-prod-img" />
-                      <div className="mini-prod-info">
-                        <span className="mini-name">{prod.name}</span>
-                        <span className="mini-price">{prod.price} EGP</span>
-                      </div>
-                    </div>
-                  ))}
+    return (
+        <div className="seller-requests-container">
+            <header className="seller-header-web">
+                <h1>Provider Dashboard</h1>
+                <div className="admin-tabs">
+                    <button className={activeTab === 'sales' ? 'active' : ''} onClick={() => setActiveTab('sales')}>Commercial Sales</button>
+                    <button className={activeTab === 'donations' ? 'active' : ''} onClick={() => setActiveTab('donations')}>Donations</button>
                 </div>
+            </header>
 
-                {/* شات المبيعات */}
-                {RenderChat(order, "orders")}
+            <div className="orders-grid-web">
+                {(activeTab === 'sales' ? orders : donations).map((item) => (
+                    <div key={item.id} className="seller-horizontal-card">
+                        <div className="order-info-section">
+                            <div className={`status-badge-web ${item.status}`}>{item.status}</div>
+                            <p className="buyer-name-web">
+                                {activeTab === 'sales' ? `Buyer: ${item.buyerName}` : `Requester: ${item.requesterName}`}
+                            </p>
+                            {activeTab === 'donations' ? (
+                                <div className="donation-verified-msg">
+                                    <h3 className="donation-title">Item: {item.productName}</h3>
+                                    <p style={{color: '#059669', fontSize: '0.9rem'}}>✓ Verified by Admin</p>
+                                </div>
+                            ) : null}
+                            
+                            {/* أزرار الموافقة تظهر فقط في البيع العادي */}
+                            {activeTab === 'sales' && item.status === 'pending' && (
+                                <div className="seller-actions">
+                                    <button className="approve-btn-web" onClick={() => updateDoc(doc(db,"orders",item.id),{status:"approved"})}>Approve</button>
+                                </div>
+                            )}
+                        </div>
 
-                {order.status === "pending" && (
-                  <div className="seller-actions" style={{marginTop: '15px'}}>
-                    <button className="approve-btn-web" onClick={() => updateOrderStatus(order.id, "approved")}>Approve</button>
-                    <button className="reject-btn-web" onClick={() => updateOrderStatus(order.id, "rejected")}>Reject</button>
-                  </div>
-                )}
-              </div>
+                        <div className="chat-area-web">
+                            <div className="messages-list-web">
+                                {item.comments?.filter(c => c.stage !== 'admin_review').map((c, i) => (
+                                    <div key={i} className={`msg-bubble-web ${c.senderId === auth.currentUser.uid ? 'me' : 'student'}`}>
+                                        <span className="sender-name-web" style={{fontSize: '11px', fontWeight: 'bold', display: 'block'}}>
+                                            {c.senderId === auth.currentUser.uid ? "Me" : (item.requesterName || "Student")}
+                                        </span>
+                                        <p>{c.text}</p>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="chat-input-web">
+                                <input placeholder="Reply..." value={commentText[item.id] || ""} onChange={(e) => setCommentText(prev => ({ ...prev, [item.id]: e.target.value }))} />
+                                <button onClick={() => handleAddComment(item.id, activeTab === 'sales' ? "orders" : "volunteer_requests")}>Send</button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
-          ))
-        ) : (
-          donations.length === 0 ? <div className="no-orders-web">No pending donations to approve.</div> :
-          donations.map((req) => (
-            <div key={req.id} className="seller-horizontal-card donation-card-style">
-              <div className="order-info-section">
-                <div className="status-badge-web verified">Verified by Admin ✅</div>
-                <h3 className="donation-title">Item: {req.productName}</h3>
-                <p className="buyer-name-web">Requested by: <strong>{req.requesterName}</strong></p>
-                
-                {/* شات التبرعات */}
-                {RenderChat(req, "volunteer_requests")}
-
-                {req.status === "pending_donor" && (
-                  <div className="seller-actions" style={{marginTop: '20px'}}>
-                    <button className="approve-btn-web" style={{backgroundColor: '#3b82f6'}} onClick={() => updateDonationStatus(req.id, "approved")}>
-                      Confirm Donation 🎁
-                    </button>
-                    <button className="reject-btn-web" onClick={() => updateDonationStatus(req.id, "rejected")}>Decline</button>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
+        </div>
+    );
 }
-
 export default SellerRequests;

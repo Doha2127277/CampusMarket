@@ -3,6 +3,7 @@
     margin: 0 auto;
     padding: 20px;
     background-color: #F8FAFC;
+    min-height: 100vh;
 }
 
 .main-header-web {
@@ -19,6 +20,32 @@
     font-weight: 900;
 }
 
+/* ================== Tabs ================== */
+.tabs-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.tab-btn {
+    padding: 10px 25px;
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.tab-btn.active {
+    background: white;
+    color: #1d0aca;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* ================== Cards ================== */
 .order-card-web {
     background: #fff;
     border-radius: 20px;
@@ -32,6 +59,8 @@
 .status-bar.approved { background: #E8F5E9; color: #2E7D32; }
 .status-bar.pending { background: #FFF3E0; color: #EF6C00; }
 .status-bar.rejected { background: #FFEBEE; color: #C62828; }
+.status-bar.pending_admin { background: #E0F2FE; color: #0284C7; } /* لون مميز للإدمن */
+.status-bar.pending_donor { background: #FEF08A; color: #A16207; } /* لون مميز للمتطوع */
 
 .status-label { font-weight: 900; text-transform: uppercase; font-size: 12px; }
 .date-text { font-size: 12px; font-weight: 700; }
