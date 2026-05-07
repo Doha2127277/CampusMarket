@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db, auth } from "../firebase";
-import { collection, onSnapshot, updateDoc, doc, getDoc, arrayUnion, deleteDoc } from "firebase/firestore";
+import { collection, onSnapshot, updateDoc, doc, getDoc, arrayUnion, query, where, deleteDoc } from "firebase/firestore";
 import './AllRequests.css';
 
 const AllRequests = () => {
@@ -25,127 +25,136 @@ const AllRequests = () => {
         };
         const unsubAuth = auth.onAuthStateChanged(checkAdmin);
 
+        // 1. Fetch Pending Products
         const unsubProducts = onSnapshot(collection(db, "products"), (snapshot) => {
             const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setProducts(list.filter(p => p.status === "pending"));
         });
 
-        const unsubVolunteer = onSnapshot(collection(db, "volunteer_requests"), (snapshot) => {
-            const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            // بنعرض الطلبات اللي حالتها لسه تحت مراجعة الأدمن
-            setVolunteerRequests(list.filter(req => req.status === "pending_admin"));
+        // 2. Fetch Volunteer Requests
+        const unsubVolunteer = onSnapshot(query(collection(db, "volunteer_requests"), where("status", "==", "pending_admin")), async (snapshot) => {
+            const requestsWithDetails = await Promise.all(snapshot.docs.map(async (requestDoc) => {
+                const reqData = requestDoc.data();
+                if (reqData.productId) {
+                    const productDoc = await getDoc(doc(db, "products", reqData.productId));
+                    if (productDoc.exists()) {
+                        const productData = productDoc.data();
+                        return { 
+                            id: requestDoc.id, 
+                            ...reqData, 
+                            displayPhoto: productData.photoURL,
+                            displayName: productData.name
+                        };
+                    }
+                }
+                return { id: requestDoc.id, ...reqData };
+            }));
+            setVolunteerRequests(requestsWithDetails);
         });
 
         return () => { unsubAuth(); unsubProducts(); unsubVolunteer(); };
     }, []);
 
-    const handleAdminChat = async (reqId) => {
-        if (!commentText[reqId]?.trim()) return;
+    // Function to send comments for both Products and Volunteer Requests
+    const handleAdminChat = async (id, collectionName) => {
+        if (!commentText[id]?.trim()) return;
         try {
-            await updateDoc(doc(db, "volunteer_requests", reqId), {
+            await updateDoc(doc(db, collectionName, id), {
                 comments: arrayUnion({
-                    text: commentText[reqId].trim(),
+                    text: commentText[id].trim(),
                     senderId: auth.currentUser.uid,
                     senderRole: 'admin',
                     stage: 'admin_review',
                     createdAt: new Date().toISOString()
                 })
             });
-            setCommentText({ ...commentText, [reqId]: "" });
+            setCommentText({ ...commentText, [id]: "" });
         } catch (e) { console.error("Chat Error:", e); }
     };
 
-    // دالة الرفض
-    const handleRejectVolunteer = async (reqId) => {
-        if (window.confirm("Are you sure you want to reject this request?")) {
-            try {
-                await updateDoc(doc(db, "volunteer_requests", reqId), {
-                    status: "rejected"
-                });
-            } catch (e) { console.error("Reject Error:", e); }
-        }
-    };
-
-    if (verifying) return <div className="admin-container"><h2>Verifying Access...</h2></div>;
+    if (verifying) return <div className="admin-container"><h2>Verifying Admin Status...</h2></div>;
     if (!isAdmin) return <div className="admin-container"><h2 style={{color:'red', textAlign:'center'}}>Access Denied</h2></div>;
 
     return (
         <div className="admin-container">
             <header className="admin-header">
-                <h1>Admin Dashboard</h1>
-                
+                <h1>Admin Control Panel</h1>
                 <div className="admin-tabs-container">
-                    <button 
-                        className={`admin-tab-item ${activeTab === 'products' ? 'active' : ''}`} 
-                        onClick={() => setActiveTab('products')}
-                    >
-                        <span className="tab-label">📦 New Products</span>
-                        <span className="tab-badge">{products.length}</span>
+                    <button className={`admin-tab ${activeTab === 'products' ? 'active' : ''}`} onClick={() => setActiveTab('products')}>
+                        New Products ({products.length})
                     </button>
-                    
-                    <button 
-                        className={`admin-tab-item ${activeTab === 'volunteer' ? 'active' : ''}`} 
-                        onClick={() => setActiveTab('volunteer')}
-                    >
-                        <span className="tab-label">🤝 Volunteer Requests</span>
-                        <span className="tab-badge">{volunteerRequests.length}</span>
+                    <button className={`admin-tab ${activeTab === 'volunteer' ? 'active' : ''}`} onClick={() => setActiveTab('volunteer')}>
+                        Volunteer Requests ({volunteerRequests.length})
                     </button>
                 </div>
             </header>
 
-            <div className="requests-content">
+            <div className="requests-list">
                 {activeTab === 'products' ? (
-                    <div className="list-container">
-                        {products.length > 0 ? products.map(p => (
-                            <div key={p.id} className="request-card-admin">
-                                <div className="request-row">
-                                    <img src={p.photoURL} className="product-img-admin" alt="" />
-                                    <div className="request-info">
-                                        <div className="product-name">{p.name}</div>
-                                        <div className="info-group"><span>Price:</span> {p.price} EGP</div>
-                                    </div>
+                    products.map(p => (
+                        <div key={p.id} className="request-card-admin">
+                            <div className="request-main-row">
+                                <img src={p.photoURL} className="product-img-admin" alt="Product" />
+                                <div className="request-info">
+                                    <div className="product-name">{p.name}</div>
+                                    <div className="info-group"><span>Price:</span> {p.price} EGP</div>
+                                    <div className="info-group"><span>Seller:</span> {p.sellerName || "User"}</div>
+                                </div>
+                                <div className="admin-action-buttons">
                                     <button className="btn-approve" onClick={() => updateDoc(doc(db, "products", p.id), {status: "approved"})}>Approve</button>
+                                    <button className="btn-reject" onClick={() => updateDoc(doc(db, "products", p.id), {status: "rejected"})}>Reject</button>
                                 </div>
                             </div>
-                        )) : <p className="empty-msg">No new products to show.</p>}
-                    </div>
+                            
+                            {/* Chat Box for Products */}
+                            <div className="admin-chat-box">
+                                <div className="messages-list-web">
+                                    {p.comments?.map((c, i) => (
+                                        <div key={i} className={`msg-bubble-web ${c.senderRole === 'admin' ? 'me' : 'other'}`}>
+                                            <span className="sender-name-web">{c.senderRole === 'admin' ? "Admin" : "Seller"}</span>
+                                            <p>{c.text}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="chat-input-web">
+                                    <input type="text" placeholder="Add a note to seller..." value={commentText[p.id] || ""} onChange={(e) => setCommentText({...commentText, [p.id]: e.target.value})} />
+                                    <button onClick={() => handleAdminChat(p.id, "products")}>Send</button>
+                                </div>
+                            </div>
+                        </div>
+                    ))
                 ) : (
-                    <div className="list-container">
-                        {volunteerRequests.length > 0 ? volunteerRequests.map(req => (
-                            <div key={req.id} className="request-card-admin">
-                                <div className="request-row">
-                                    <div className="request-info">
-                                        <div className="product-name">Item: {req.productName}</div>
-                                        <div className="info-group"><span>Requester:</span> {req.requesterName}</div>
-                                    </div>
-                                    <div className="admin-actions">
-                                        <button className="btn-approve" onClick={() => updateDoc(doc(db, "volunteer_requests", req.id), {status: "approved"})}>Approve</button>
-                                        <button className="btn-reject" onClick={() => handleRejectVolunteer(req.id)}>Reject</button>
-                                    </div>
+                    volunteerRequests.map(req => (
+                        <div key={req.id} className="request-card-admin">
+                            <div className="request-main-row">
+                                <img src={req.displayPhoto || req.productPhotoURL} className="product-img-admin" alt="Item" />
+                                <div className="request-info">
+                                    <div className="product-name">Item: {req.displayName || req.productName}</div>
+                                    <div className="info-group"><span>Requester:</span> {req.requesterName}</div>
                                 </div>
-
-                                <div className="admin-chat-box">
-                                    <div className="messages-list-web">
-                                        {req.comments?.filter(c => c.stage === 'admin_review').map((c, i) => (
-                                            <div key={i} className={`msg-bubble-web ${c.senderRole === 'admin' ? 'me' : 'student'}`}>
-                                                <span className="sender-name-web">{c.senderRole === 'admin' ? "Admin" : (req.requesterName || "Student")}</span>
-                                                <p>{c.text}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="chat-input-web">
-                                        <input 
-                                            type="text" 
-                                            placeholder="Message student..." 
-                                            value={commentText[req.id] || ""} 
-                                            onChange={(e) => setCommentText({...commentText, [req.id]: e.target.value})} 
-                                        />
-                                        <button className="send-btn-web" onClick={() => handleAdminChat(req.id)}>Send</button>
-                                    </div>
+                                <div className="admin-action-buttons">
+                                    <button className="btn-approve" onClick={() => updateDoc(doc(db, "volunteer_requests", req.id), {status: "approved"})}>Verify</button>
+                                    <button className="btn-reject" onClick={() => updateDoc(doc(db, "volunteer_requests", req.id), {status: "rejected"})}>Decline</button>
                                 </div>
                             </div>
-                        )) : <p className="empty-msg">No volunteer requests to show.</p>}
-                    </div>
+
+                            {/* Chat Box for Volunteer Requests */}
+                            <div className="admin-chat-box">
+                                <div className="messages-list-web">
+                                    {req.comments?.filter(c => c.stage === 'admin_review').map((c, i) => (
+                                        <div key={i} className={`msg-bubble-web ${c.senderRole === 'admin' ? 'me' : 'other'}`}>
+                                            <span className="sender-name-web">{c.senderRole === 'admin' ? "Admin" : "Student"}</span>
+                                            <p>{c.text}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="chat-input-web">
+                                    <input type="text" placeholder="Message student..." value={commentText[req.id] || ""} onChange={(e) => setCommentText({...commentText, [req.id]: e.target.value})} />
+                                    <button onClick={() => handleAdminChat(req.id, "volunteer_requests")}>Send</button>
+                                </div>
+                            </div>
+                        </div>
+                    ))
                 )}
             </div>
         </div>
