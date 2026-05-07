@@ -1,134 +1,153 @@
 import React, { useEffect, useState } from 'react';
 import { db, auth } from "../firebase";
-import { collection, query, where, onSnapshot, updateDoc, doc, getDoc } from "firebase/firestore";
+import { collection, onSnapshot, updateDoc, doc, getDoc, arrayUnion, deleteDoc } from "firebase/firestore";
 import './AllRequests.css';
 
 const AllRequests = () => {
-    const [products, setProducts] = useState([]); // للمنتجات الجديدة
-    const [volunteerRequests, setVolunteerRequests] = useState([]); // لطلبات التطوع (جديد)
-    const [loading, setLoading] = useState(true);
-    const [userNames, setUserNames] = useState({});
+    const [products, setProducts] = useState([]); 
+    const [volunteerRequests, setVolunteerRequests] = useState([]); 
     const [isAdmin, setIsAdmin] = useState(false);
     const [verifying, setVerifying] = useState(true);
-    const [activeTab, setActiveTab] = useState('products'); // لتبديل العرض
+    const [activeTab, setActiveTab] = useState('products'); 
+    const [commentText, setCommentText] = useState({});
 
     useEffect(() => {
-        const checkAdminStatus = async (user) => {
+        const checkAdmin = async (user) => {
             if (user) {
                 try {
                     const userDoc = await getDoc(doc(db, "users", user.uid));
-                    setIsAdmin(userDoc.exists() && userDoc.data().role === "admin");
-                } catch {
-                    setIsAdmin(false);
-                }
-            } else {
-                setIsAdmin(false);
+                    if (userDoc.exists() && userDoc.data().role === "admin") {
+                        setIsAdmin(true);
+                    }
+                } catch (e) { console.error("Admin Check Error:", e); }
             }
             setVerifying(false);
         };
+        const unsubAuth = auth.onAuthStateChanged(checkAdmin);
 
-        const unsubscribeAuth = auth.onAuthStateChanged(checkAdminStatus);
-
-        // 1. مراقبة المنتجات الجديدة المنتظرة للموافقة
-        const qProducts = query(collection(db, "products"), where("status", "==", "pending"));
-        const unsubscribeProducts = onSnapshot(qProducts, (snapshot) => {
-            setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const unsubProducts = onSnapshot(collection(db, "products"), (snapshot) => {
+            const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setProducts(list.filter(p => p.status === "pending"));
         });
 
-        // 2. مراقبة طلبات التطوع الجديدة (Volunteer Verification)
-        const qVolunteer = query(collection(db, "volunteer_requests"), where("status", "==", "pending_admin"));
-        const unsubscribeVolunteer = onSnapshot(qVolunteer, (snapshot) => {
-            setVolunteerRequests(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-            setLoading(false);
+        const unsubVolunteer = onSnapshot(collection(db, "volunteer_requests"), (snapshot) => {
+            const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // بنعرض الطلبات اللي حالتها لسه تحت مراجعة الأدمن
+            setVolunteerRequests(list.filter(req => req.status === "pending_admin"));
         });
 
-        return () => {
-            unsubscribeAuth();
-            unsubscribeProducts();
-            unsubscribeVolunteer();
-        };
+        return () => { unsubAuth(); unsubProducts(); unsubVolunteer(); };
     }, []);
 
-    // وظيفة عامة لجلب الأسماء
-    const fetchUserName = async (userId) => {
-        if (!userId || userNames[userId]) return;
-        const userDoc = await getDoc(doc(db, "users", userId));
-        if (userDoc.exists()) {
-            setUserNames(prev => ({ ...prev, [userId]: userDoc.data().fullName }));
+    const handleAdminChat = async (reqId) => {
+        if (!commentText[reqId]?.trim()) return;
+        try {
+            await updateDoc(doc(db, "volunteer_requests", reqId), {
+                comments: arrayUnion({
+                    text: commentText[reqId].trim(),
+                    senderId: auth.currentUser.uid,
+                    senderRole: 'admin',
+                    stage: 'admin_review',
+                    createdAt: new Date().toISOString()
+                })
+            });
+            setCommentText({ ...commentText, [reqId]: "" });
+        } catch (e) { console.error("Chat Error:", e); }
+    };
+
+    // دالة الرفض
+    const handleRejectVolunteer = async (reqId) => {
+        if (window.confirm("Are you sure you want to reject this request?")) {
+            try {
+                await updateDoc(doc(db, "volunteer_requests", reqId), {
+                    status: "rejected"
+                });
+            } catch (e) { console.error("Reject Error:", e); }
         }
     };
 
-    // مراجعة المنتجات العادية
-    const handleProductStatus = async (id, newStatus) => {
-        try {
-            await updateDoc(doc(db, "products", id), { status: newStatus });
-            alert(`Product ${newStatus}!`);
-        } catch (error) { console.error(error); }
-    };
-
-    // مراجعة طلبات التطوع (نقلها للمتبرع)
-    const handleVolunteerStatus = async (id, newStatus) => {
-        try {
-            // لو وافق، الحالة تتحول لـ pending_donor عشان تظهر لصاحب الشيء
-            const finalStatus = newStatus === 'approved' ? 'pending_donor' : 'rejected';
-            await updateDoc(doc(db, "volunteer_requests", id), { status: finalStatus });
-            alert(`Volunteer request ${newStatus === 'approved' ? 'sent to donor' : 'rejected'}!`);
-        } catch (error) { console.error(error); }
-    };
-
-    if (verifying) return <div className="admin-container"><p className="status-text">Verifying Access...</p></div>;
-
-    if (!isAdmin) return <div className="admin-container"><h2 style={{ color: '#ef4444', textAlign: 'center' }}>Access Denied</h2></div>;
+    if (verifying) return <div className="admin-container"><h2>Verifying Access...</h2></div>;
+    if (!isAdmin) return <div className="admin-container"><h2 style={{color:'red', textAlign:'center'}}>Access Denied</h2></div>;
 
     return (
         <div className="admin-container">
             <header className="admin-header">
-                <h1 className="admin-title">Admin Control Center</h1>
-                <div className="admin-tabs">
-                    <button className={activeTab === 'products' ? 'active' : ''} onClick={() => setActiveTab('products')}>
-                        New Products ({products.length})
+                <h1>Admin Dashboard</h1>
+                
+                <div className="admin-tabs-container">
+                    <button 
+                        className={`admin-tab-item ${activeTab === 'products' ? 'active' : ''}`} 
+                        onClick={() => setActiveTab('products')}
+                    >
+                        <span className="tab-label">📦 New Products</span>
+                        <span className="tab-badge">{products.length}</span>
                     </button>
-                    <button className={activeTab === 'volunteer' ? 'active' : ''} onClick={() => setActiveTab('volunteer')}>
-                        Volunteer Verification ({volunteerRequests.length})
+                    
+                    <button 
+                        className={`admin-tab-item ${activeTab === 'volunteer' ? 'active' : ''}`} 
+                        onClick={() => setActiveTab('volunteer')}
+                    >
+                        <span className="tab-label">🤝 Volunteer Requests</span>
+                        <span className="tab-badge">{volunteerRequests.length}</span>
                     </button>
                 </div>
             </header>
 
-            {loading ? <p className="status-text">Loading...</p> : (
-                <div className="requests-list">
-                    {activeTab === 'products' ? (
-                        products.map(product => (
-                            <div key={product.id} className="request-row">
-                                <img src={product.photoURL} alt="" className="product-img-admin" />
-                                <div className="request-info">
-                                    <div className="product-name">{product.name}</div>
-                                    <div className="info-group"><span>Price:</span> {product.price === 0 ? "Donation" : `${product.price} EGP`}</div>
-                                    <div className="info-group"><span>Seller ID:</span> {product.userId}</div>
-                                </div>
-                                <div className="button-group">
-                                    <button onClick={() => handleProductStatus(product.id, "approved")} className="btn-approve">Approve</button>
-                                    <button onClick={() => handleProductStatus(product.id, "rejected")} className="btn-reject">Reject</button>
+            <div className="requests-content">
+                {activeTab === 'products' ? (
+                    <div className="list-container">
+                        {products.length > 0 ? products.map(p => (
+                            <div key={p.id} className="request-card-admin">
+                                <div className="request-row">
+                                    <img src={p.photoURL} className="product-img-admin" alt="" />
+                                    <div className="request-info">
+                                        <div className="product-name">{p.name}</div>
+                                        <div className="info-group"><span>Price:</span> {p.price} EGP</div>
+                                    </div>
+                                    <button className="btn-approve" onClick={() => updateDoc(doc(db, "products", p.id), {status: "approved"})}>Approve</button>
                                 </div>
                             </div>
-                        ))
-                    ) : (
-                        volunteerRequests.map(req => (
-                            <div key={req.id} className="request-row volunteer-row">
-                                <div className="request-info">
-                                    <div className="product-name">Request for: {req.productName}</div>
-                                    <div className="info-group"><span>Requester:</span> {req.requesterName}</div>
-                                    <div className="info-group"><span>Reason:</span> "Requesting this item for study use"</div>
+                        )) : <p className="empty-msg">No new products to show.</p>}
+                    </div>
+                ) : (
+                    <div className="list-container">
+                        {volunteerRequests.length > 0 ? volunteerRequests.map(req => (
+                            <div key={req.id} className="request-card-admin">
+                                <div className="request-row">
+                                    <div className="request-info">
+                                        <div className="product-name">Item: {req.productName}</div>
+                                        <div className="info-group"><span>Requester:</span> {req.requesterName}</div>
+                                    </div>
+                                    <div className="admin-actions">
+                                        <button className="btn-approve" onClick={() => updateDoc(doc(db, "volunteer_requests", req.id), {status: "approved"})}>Approve</button>
+                                        <button className="btn-reject" onClick={() => handleRejectVolunteer(req.id)}>Reject</button>
+                                    </div>
                                 </div>
-                                <div className="button-group">
-                                    <button onClick={() => handleVolunteerStatus(req.id, "approved")} className="btn-approve">Verify & Send to Donor</button>
-                                    <button onClick={() => handleVolunteerStatus(req.id, "rejected")} className="btn-reject">Decline</button>
+
+                                <div className="admin-chat-box">
+                                    <div className="messages-list-web">
+                                        {req.comments?.filter(c => c.stage === 'admin_review').map((c, i) => (
+                                            <div key={i} className={`msg-bubble-web ${c.senderRole === 'admin' ? 'me' : 'student'}`}>
+                                                <span className="sender-name-web">{c.senderRole === 'admin' ? "Admin" : (req.requesterName || "Student")}</span>
+                                                <p>{c.text}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="chat-input-web">
+                                        <input 
+                                            type="text" 
+                                            placeholder="Message student..." 
+                                            value={commentText[req.id] || ""} 
+                                            onChange={(e) => setCommentText({...commentText, [req.id]: e.target.value})} 
+                                        />
+                                        <button className="send-btn-web" onClick={() => handleAdminChat(req.id)}>Send</button>
+                                    </div>
                                 </div>
                             </div>
-                        ))
-                    )}
-                    {(activeTab === 'products' ? products : volunteerRequests).length === 0 && <p className="status-text">Nothing to review here.</p>}
-                </div>
-            )}
+                        )) : <p className="empty-msg">No volunteer requests to show.</p>}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

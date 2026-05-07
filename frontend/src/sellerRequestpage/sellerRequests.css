@@ -1,3 +1,4 @@
+/* SellerRequests.css */
 .seller-requests-container {
     max-width: 1100px;
     margin: 0 auto;
@@ -20,9 +21,35 @@
     font-weight: 900;
 }
 
+/* التنسيق الخاص بالتبديل بين المبيعات والتبرعات */
+.admin-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.admin-tabs button {
+    padding: 10px 25px;
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.admin-tabs button.active {
+    background: white;
+    color: #1d0aca;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* الكارت بشكل أفقي */
 .seller-horizontal-card {
     display: grid;
-    grid-template-columns: 1.2fr 1fr;
+    grid-template-columns: 1fr 1fr; /* قسم للمعلومات وقسم للشات */
     background: white;
     border-radius: 25px;
     margin-bottom: 30px;
@@ -51,34 +78,97 @@
 .status-badge-web.approved { background: #E8F5E9; color: #2E7D32; }
 .status-badge-web.pending { background: #FFF3E0; color: #EF6C00; }
 .status-badge-web.rejected { background: #FFEBEE; color: #C62828; }
+.status-badge-web.verified { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
 
 .buyer-name-web { font-weight: 800; font-size: 18px; color: #1E293B; margin: 0; }
-.order-date-web { font-size: 12px; color: #64748B; margin: 5px 0 20px; }
+.donation-title { color: #1d0aca; font-weight: 900; margin: 10px 0; }
 
-.products-mini-list { flex: 1; }
-.product-row-web {
+/* شاشه الشات داخل الكارت */
+.chat-area-web {
+    background-color: #FCFDFE;
+    padding: 20px;
     display: flex;
-    align-items: center;
-    background: #F8FAFC;
-    padding: 10px;
-    border-radius: 12px;
+    flex-direction: column;
+    height: 100%;
+}
+
+.chat-title-web {
+    font-size: 12px;
+    font-weight: 800;
+    color: #64748B;
+    text-transform: uppercase;
     margin-bottom: 10px;
 }
 
-
-.mini-prod-img { 
-    width: 60px; 
-    height: 60px; 
-    border-radius: 8px; 
-    object-fit: cover; 
-    background-color: #eee;
+.messages-list-web {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding-right: 5px;
 }
 
-.mini-prod-info { margin-left: 12px; display: flex; flex-direction: column; }
-.mini-name { font-weight: 700; color: #334155; }
-.mini-price { color: #1d0aca; font-weight: 800; font-size: 13px; }
+.msg-bubble-web {
+    padding: 10px 15px;
+    border-radius: 15px;
+    max-width: 85%;
+    font-size: 13px;
+}
 
-.seller-actions { display: flex; gap: 10px; margin: 20px 0; }
+.msg-bubble-web.me {
+    align-self: flex-end;
+    background: #1d0aca;
+    color: white;
+    border-bottom-right-radius: 2px;
+}
+
+.msg-bubble-web.student {
+    align-self: flex-start;
+    background: white;
+    border: 1px solid #E2E8F0;
+    border-bottom-left-radius: 2px;
+}
+
+.sender-name-web {
+    font-size: 10px;
+    font-weight: 800;
+    display: block;
+    margin-bottom: 3px;
+    opacity: 0.7;
+}
+
+.chat-input-web {
+    display: flex;
+    gap: 8px;
+}
+
+.chat-input-web input {
+    flex: 1;
+    padding: 10px 15px;
+    border-radius: 12px;
+    border: 1px solid #E2E8F0;
+    outline: none;
+}
+
+.chat-input-web .send-btn-web {
+    background: #1d0aca;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0 15px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.seller-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+}
+
 .approve-btn-web, .reject-btn-web {
     flex: 1; padding: 12px; border-radius: 12px; border: none;
     font-weight: 800; cursor: pointer; color: white; transition: 0.3s;
@@ -86,24 +176,7 @@
 .approve-btn-web { background: #2E7D32; }
 .reject-btn-web { background: #C62828; }
 
-.income-footer {
-    display: flex; justify-content: space-between; align-items: center;
-    padding-top: 15px; border-top: 2px dashed #F1F5F9;
-}
-.income-footer strong { font-size: 20px; color: #1d0aca; }
-
-.seller-chat-section { background-color: #FCFDFE; padding: 25px; display: flex; flex-direction: column; }
-.chat-messages-web { flex: 1; overflow-y: auto; max-height: 240px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-
-.bubble-web { padding: 10px 15px; border-radius: 15px; max-width: 85%; font-size: 14px; }
-.bubble-web.me { align-self: flex-end; background: #1d0aca; color: white; border-bottom-right-radius: 2px; }
-.bubble-web.buyer { align-self: flex-start; background: white; border: 1px solid #E2E8F0; border-bottom-left-radius: 2px; }
-
-.chat-input-row { display: flex; gap: 8px; }
-.chat-input-row input { flex: 1; padding: 10px 15px; border-radius: 12px; border: 1px solid #E2E8F0; outline: none; }
-.chat-input-row button { background: #1d0aca; color: white; border: none; border-radius: 12px; padding: 0 15px; font-weight: 800; cursor: pointer; }
-
 @media (max-width: 850px) {
-    .seller-horizontal-card { grid-template-columns: 1fr; }
-    .order-info-section { border-right: none; border-bottom: 1px solid #EEE; }
+    .seller-horizontal-card { grid-template-columns: 1fr; min-height: auto; }
+    .order-info-section { border-right: none; border-bottom: 1px solid #F1F5F9; }
 }
