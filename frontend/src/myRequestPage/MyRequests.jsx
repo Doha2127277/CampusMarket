@@ -86,14 +86,29 @@ function MyRequests() {
 
     try {
       await updateDoc(doc(db, col, item.id), {
+  const handleAddComment = async (item, col) => {
+    if (!commentText[item.id]?.trim()) return;
+
+    // تحديد المرحلة تلقائياً بناءً على حالة طلب التبرع
+    let currentStage = 'direct_sales'; // افتراضي للطلبات التجارية
+    if (col === "volunteer_requests") {
+        // إذا لم يوافق الأدمن بعد، الكلام موجه للأدمن. إذا وافق، الكلام موجه للمتبرع
+        currentStage = item.status === 'pending_admin' ? 'admin_review' : 'donor_contact';
+    }
+
+    try {
+      await updateDoc(doc(db, col, item.id), {
         comments: arrayUnion({
+          text: commentText[item.id].trim(),
           text: commentText[item.id].trim(),
           senderId: auth.currentUser.uid,
           senderRole: 'student',
           stage: currentStage,
+          stage: currentStage,
           createdAt: new Date().toISOString()
         })
       });
+      setCommentText({ ...commentText, [item.id]: "" });
       setCommentText({ ...commentText, [item.id]: "" });
     } catch (e) { console.error("Comment error:", e); }
   };
@@ -115,6 +130,7 @@ function MyRequests() {
           <div key={item.id} className="order-card-web">
             <div className="order-info-section">
                 <div className={`status-badge-web ${item.status}`}>
+                    {item.status ? item.status.replace(/_/g, ' ') : 'Pending'}
                     {item.status ? item.status.replace(/_/g, ' ') : 'Pending'}
                 </div>
                 
@@ -142,7 +158,21 @@ function MyRequests() {
                      (item.status === 'pending_admin' ? "🛡️ Chat with Admin" : "👤 Chat with Donor")}
                 </div>
 
+                {/* عنوان الشات يتغير ديناميكياً ليخبر الطالب مع من يتحدث الآن */}
+                <div className="chat-title-web">
+                    {activeTab === 'orders' ? "Chat with Seller" : 
+                     (item.status === 'pending_admin' ? "🛡️ Chat with Admin" : "👤 Chat with Donor")}
+                </div>
+
                 <div className="messages-list-web">
+                  {item.comments?.filter(c => {
+                      // في التبرعات: اظهر شات الأدمن فقط لو الحالة انتظار، واظهر شات المتبرع فقط لو تم قبول الطلب
+                      if (activeTab === 'grants') {
+                          const targetStage = item.status === 'pending_admin' ? 'admin_review' : 'donor_contact';
+                          return c.stage === targetStage;
+                      }
+                      return true; // للطلبات العادية اظهر كل شيء
+                  }).map((c, i) => (
                   {item.comments?.filter(c => {
                       // في التبرعات: اظهر شات الأدمن فقط لو الحالة انتظار، واظهر شات المتبرع فقط لو تم قبول الطلب
                       if (activeTab === 'grants') {
@@ -156,18 +186,22 @@ function MyRequests() {
                          {c.senderId === auth.currentUser.uid 
                            ? "Me" 
                            : (c.senderRole === 'admin' ? "🛡️ Admin" : `👤 ${item.sellerName || "Provider"}`)}
+                           : (c.senderRole === 'admin' ? "🛡️ Admin" : `👤 ${item.sellerName || "Provider"}`)}
                        </span>
                        <p style={{margin: 0}}>{c.text}</p>
                     </div>
                   ))}
                 </div>
 
+
                 <div className="chat-input-web">
                   <input 
                     value={commentText[item.id] || ""} 
                     onChange={e => setCommentText({...commentText, [item.id]: e.target.value})} 
                     placeholder={activeTab === 'grants' && item.status === 'pending_admin' ? "Message admin..." : "Message provider..."} 
+                    placeholder={activeTab === 'grants' && item.status === 'pending_admin' ? "Message admin..." : "Message provider..."} 
                   />
+                  <button onClick={() => handleAddComment(item, activeTab === 'orders' ? "orders" : "volunteer_requests")}>Send</button>
                   <button onClick={() => handleAddComment(item, activeTab === 'orders' ? "orders" : "volunteer_requests")}>Send</button>
                 </div>
             </div>
@@ -175,6 +209,7 @@ function MyRequests() {
         ))}
 
         {(activeTab === 'orders' ? orders : grants).length === 0 && (
+          <div style={{textAlign: 'center', padding: '50px', color: '#64748B'}}>No requests found.</div>
           <div style={{textAlign: 'center', padding: '50px', color: '#64748B'}}>No requests found.</div>
         )}
       </div>

@@ -18,6 +18,7 @@ function SellerRequests() {
     const [activeTab, setActiveTab] = useState('sales');
     const [commentText, setCommentText] = useState({});
     const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!auth.currentUser) return;
@@ -74,6 +75,7 @@ function SellerRequests() {
                 senderId: auth.currentUser.uid,
                 senderRole: 'seller',
                 stage: stage,
+                stage: stage,
                 createdAt: new Date().toISOString()
             })
         });
@@ -114,6 +116,9 @@ function SellerRequests() {
                             display: 'flex', flexDirection: 'row', background: '#fff', marginBottom: '20px',
                             borderRadius: '15px', border: '1px solid #eee', minHeight: '200px',
                             overflow: 'hidden', boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
+                            display: 'flex', flexDirection: 'row', background: '#fff', marginBottom: '20px',
+                            borderRadius: '15px', border: '1px solid #eee', minHeight: '200px',
+                            overflow: 'hidden', boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
                         }}>
                             
                             {/* مربع الصورة */}
@@ -129,9 +134,7 @@ function SellerRequests() {
                                         }}
                                     />
                                 ) : (
-                                    <div style={{ textAlign: 'center', color: '#ccc' }}>
-                                        <p style={{ fontSize: '12px' }}>No Image Found</p>
-                                    </div>
+                                    <div style={{ textAlign: 'center', color: '#ccc' }}><p style={{ fontSize: '12px' }}>No Image Found</p></div>
                                 )}
                             </div>
 
@@ -140,6 +143,7 @@ function SellerRequests() {
                                 <div className={`status-badge-web ${item.status}`} style={{ width: 'fit-content' }}>{item.status}</div>
                                 <h3 style={{ margin: '15px 0 5px 0', color: '#1a1a1a' }}>{item.productName || "Product"}</h3>
                                 <p style={{ margin: 0, fontWeight: '600', color: '#555' }}>
+                                    {activeTab === 'sales' ? `Buyer: ${item.buyerName || 'Student'}` : `Requester: ${item.requesterName || 'Student'}`}
                                     {activeTab === 'sales' ? `Buyer: ${item.buyerName || 'Student'}` : `Requester: ${item.requesterName || 'Student'}`}
                                 </p>
                                 
@@ -155,6 +159,7 @@ function SellerRequests() {
                             {/* شات المتبرع مع الطالب */}
                             <div style={{ flex: 1.2, padding: '15px', borderLeft: '1px solid #eee', display: 'flex', flexDirection: 'column', backgroundColor: '#fcfcfc' }}>
                                 <div className="messages-list-web" style={{ flex: 1, maxHeight: '120px', overflowY: 'auto' }}>
+                                    {/* الفلترة هنا تضمن عدم ظهور شات الأدمن (stage !== 'admin_review') */}
                                     {item.comments?.filter(c => c.stage !== 'admin_review').map((c, i) => (
                                         <div key={i} className={`msg-bubble-web ${c.senderId === auth.currentUser.uid ? 'me' : 'student'}`}>
                                             <p style={{ margin: 0, fontSize: '13px' }}>{c.text}</p>
