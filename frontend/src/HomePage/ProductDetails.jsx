@@ -20,6 +20,7 @@ function ProductDetails() {
   const [loading, setLoading] = useState(true);
   const [isInCart, setIsInCart] = useState(false);
   const [isRequested, setIsRequested] = useState(false); 
+  const [fetchingStatus, setFetchingStatus] = useState(true); 
   const [sellerName, setSellerName] = useState("...");
   const [cart, setCart] = useState([]);
 
@@ -61,8 +62,10 @@ function ProductDetails() {
         }
       } catch (error) {
         console.error("Error fetching product:", error);
+      } finally {
+        setLoading(false);
+        setFetchingStatus(false);
       }
-      setLoading(false);
     };
     getProductData();
   }, [id]);
@@ -85,8 +88,10 @@ function ProductDetails() {
     window.dispatchEvent(new Event("storage"));
   };
 
+  // الدالة المُعدلة لضمان إرسال رابط الصورة واسم الطالب
   const handleVolunteerRequest = async () => {
     if (!auth.currentUser) return alert("Please log in first!");
+    setFetchingStatus(true);
 
     try {
       if (isRequested) {
@@ -105,8 +110,11 @@ function ProductDetails() {
         const requestData = {
           productId: id,
           productName: product.name,
+          // إضافة رابط الصورة هنا ليظهر عند السيلر
+          productPhotoURL: product.photoURL || "", 
           requesterId: auth.currentUser.uid,
-          requesterName: auth.currentUser.displayName || "Student",
+          // تجنب ظهور undefined باستخدام الإيميل كبديل
+          requesterName: auth.currentUser.displayName || auth.currentUser.email || "Student",
           sellerId: product.sellerId || product.userId || product.uid,
           status: "pending_admin",
           createdAt: serverTimestamp(),
@@ -119,13 +127,16 @@ function ProductDetails() {
     } catch (error) {
       console.error("Error handling request:", error);
       alert("Something went wrong, try again.");
+    } finally {
+      setFetchingStatus(false);
     }
   };
 
-  if (loading) return <div style={{padding: '50px', textAlign: 'center'}}>Loading...</div>;
-  if (!product) return <div style={{padding: '50px', textAlign: 'center'}}>Product not found!</div>;
+  if (loading) return <div style={styles.centerText}>Loading...</div>;
+  if (!product) return <div style={styles.centerText}>Product not found!</div>;
 
-  const isOwner = auth.currentUser?.uid === (product.sellerId || product.userId || product.uid);
+  const currentUser = auth.currentUser;
+  const isOwner = currentUser?.uid === (product.sellerId || product.userId || product.uid);
   const formattedDate = product.createdAt?.seconds 
     ? new Date(product.createdAt.seconds * 1000).toLocaleDateString() 
     : "Recently";
@@ -144,9 +155,9 @@ function ProductDetails() {
              <img src={product.photoURL} alt={product.name} style={styles.img} />
              <div style={{
                 ...styles.modeBadge, 
-                backgroundColor: product.price === 0 ? '#3b82f6' : '#10b981'
+                backgroundColor: product.price === 0 ? '#ef4444' : '#10b981'
              }}>
-                {product.price === 0 ? "Donation" : product.mode}
+                {product.price === 0 ? "Volunteer Item" : product.mode || "Sale"}
              </div>
           </div>
         </div>
@@ -154,7 +165,7 @@ function ProductDetails() {
         <div style={styles.infoSection}>
           <h1 style={styles.title}>{product.name}</h1>
           <div style={styles.priceRow}>
-             <span style={styles.price}>{product.price === 0 ? "Free" : `${product.price} EGP`}</span>
+             <span style={styles.price}>{product.price === 0 ? "Free / Volunteer" : `${product.price} EGP`}</span>
              <span style={styles.categoryBadge}>{product.category}</span>
           </div>
 
@@ -173,27 +184,33 @@ function ProductDetails() {
           </div>
 
           {isOwner ? (
-            <button style={{...styles.cartBtn, backgroundColor: '#94a3b8', cursor: 'not-allowed'}} disabled>
-              Your Product (Owned) ✨
+            <button style={{...styles.cartBtn, ...styles.disabledBtn}} disabled>
+              My Own Product ✨
             </button>
           ) : (
             <>
               {product.price === 0 ? (
-                /* ✅ زرار التبرع: أحمر واسمه Remove عند الطلب */
                 <button 
                   style={{
                     ...styles.cartBtn, 
                     backgroundColor: isRequested ? '#ef4444' : '#3b82f6',
-                    cursor: 'pointer'
+                    cursor: fetchingStatus ? 'not-allowed' : 'pointer',
+                    opacity: fetchingStatus ? 0.7 : 1
                   }} 
                   onClick={handleVolunteerRequest}
+                  disabled={fetchingStatus}
                 >
                   {isRequested ? "Remove from Requests 🗑️" : "Request Assistance 🤝"}
                 </button>
               ) : (
                 <button 
-                  style={{...styles.cartBtn, backgroundColor: isInCart ? '#ef4444' : '#10b981'}}
+                  style={{
+                    ...styles.cartBtn, 
+                    backgroundColor: isInCart ? '#ef4444' : '#10b981',
+                    cursor: fetchingStatus ? 'not-allowed' : 'pointer'
+                  }}
                   onClick={handleToggleCart}
+                  disabled={fetchingStatus}
                 >
                   {isInCart ? "Remove from Cart 🗑️" : "Add to Cart 🛒"}
                 </button>
@@ -211,9 +228,9 @@ const styles = {
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' },
   backBtn: { padding: '8px 15px', borderRadius: '10px', border: 'none', background: '#f1f5f9', cursor: 'pointer', fontWeight: '600', color: '#475569' },
   headerTitle: { fontSize: '1.2rem', color: '#1e293b' },
-  gridContainer: { display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '50px', alignItems: 'start' },
+  gridContainer: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '50px', alignItems: 'start' },
   imageSection: { display: 'flex', justifyContent: 'center' },
-  imageWrapper: { position: 'relative', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 4px 25px rgba(0,0,0,0.1)', width: '100%', aspectRatio: '1/1', backgroundColor: '#fff' },
+  imageWrapper: { position: 'relative', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 4px 25px rgba(0,0,0,0.1)', width: '100%', aspectRatio: '1/1', backgroundColor: '#f8fafc' },
   img: { width: '100%', height: '100%', objectFit: 'cover' },
   modeBadge: { position: 'absolute', bottom: '15px', right: '15px', color: 'white', padding: '6px 12px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase' },
   infoSection: { textAlign: 'left', display: 'flex', flexDirection: 'column' },
@@ -229,7 +246,9 @@ const styles = {
   descriptionSection: { marginBottom: '20px' },
   secTitle: { fontSize: '1rem', color: '#1e293b', marginBottom: '8px', fontWeight: 'bold' },
   descContent: { color: '#475569', lineHeight: '1.6', fontSize: '1rem', margin: 0 },
-  cartBtn: { width: '100%', padding: '16px', border: 'none', borderRadius: '12px', color: 'white', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', transition: '0.3s' }
+  cartBtn: { width: '100%', padding: '16px', border: 'none', borderRadius: '12px', color: 'white', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', transition: '0.3s' },
+  disabledBtn: { backgroundColor: '#94a3b8', cursor: 'not-allowed' },
+  centerText: { padding: '100px', textAlign: 'center', fontSize: '1.2rem', color: '#64748b' }
 };
 
 export default ProductDetails;

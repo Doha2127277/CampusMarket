@@ -75,7 +75,7 @@
     text-transform: uppercase;
     margin-bottom: 15px;
 }
-.status-badge-web.approved { background: #E8F5E9; color: #2E7D32; }
+.status-badge-web.approved { background: #E8F5E9; color: #1d0aca; }
 .status-badge-web.pending { background: #FFF3E0; color: #EF6C00; }
 .status-badge-web.rejected { background: #FFEBEE; color: #C62828; }
 .status-badge-web.verified { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
@@ -120,15 +120,15 @@
 
 .msg-bubble-web.me {
     align-self: flex-end;
-    background: #1d0aca;
+    background: #0fca3b;
     color: white;
     border-bottom-right-radius: 2px;
 }
 
 .msg-bubble-web.student {
     align-self: flex-start;
-    background: white;
-    border: 1px solid #E2E8F0;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #000000;
     border-bottom-left-radius: 2px;
 }
 
