@@ -141,7 +141,7 @@ function Navbar({ role, setRole }) {
     <img
       src={
         auth.currentUser.photoURL ||
-        "https://via.placeholder.com/35"
+        "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
       }
       alt="profile"
       style={{

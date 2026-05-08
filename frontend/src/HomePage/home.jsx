@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../firebase'; 
 import { collection, onSnapshot, query, where, addDoc, deleteDoc, doc, getDocs, serverTimestamp, getDoc, updateDoc } from "firebase/firestore";
-import { updateProfile, updatePassword, signOut, onAuthStateChanged } from "firebase/auth"; // دوال التحديث المضافة
+import { updateProfile, updatePassword, signOut, onAuthStateChanged } from "firebase/auth"; 
 import { useNavigate, useLocation } from "react-router-dom";
 import './Home.css';
 
@@ -27,6 +27,7 @@ function Home() {
     const [newUserName, setNewUserName] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [passwordsMatch, setPasswordsMatch] = useState(true);
     const [tempImageFile, setTempImageFile] = useState(null);
     const [previewImage, setPreviewImage] = useState("");
     const [updating, setUpdating] = useState(false);
@@ -41,6 +42,15 @@ function Home() {
         });
         return () => unsubscribe();
     }, []);
+
+    // مراقبة تطابق الباسورد لحظياً
+    useEffect(() => {
+        if (confirmPassword && newPassword !== confirmPassword) {
+            setPasswordsMatch(false);
+        } else {
+            setPasswordsMatch(true);
+        }
+    }, [newPassword, confirmPassword]);
 
     // دالة رفع الصورة لـ Cloudinary
     const uploadToCloudinary = async (file) => {
@@ -57,10 +67,8 @@ function Home() {
     };
 
     // معالج تحديث البيانات
-    const handleUpdateProfile = async (e) => {
-        e.preventDefault();
+    const handleUpdateProfile = async () => {
         if (newPassword && newPassword !== confirmPassword) {
-            alert("Passwords do not match!");
             return;
         }
         setUpdating(true);
@@ -88,9 +96,10 @@ function Home() {
                 await updatePassword(user, newPassword);
             }
 
-            alert("Profile updated! Please login again for security.");
+            window.alert("Profile Updated Successfully! ✅\nPlease login again to apply changes.");
             setProfileModalVisible(false);
             await signOut(auth);
+            localStorage.clear();
             navigate("/login");
         } catch (error) {
             alert("Error: " + error.message);
@@ -107,7 +116,7 @@ function Home() {
         }
     }, [location.state]);
 
-    // 2. جلب المنتجات (كودك الأصلي بدون تغيير)
+    // 2. جلب المنتجات 
     useEffect(() => {
         const q = query(collection(db, "products"), where("status", "==", "approved"));
         const unsubscribe = onSnapshot(q, async (querySnapshot) => {
@@ -136,7 +145,7 @@ function Home() {
         return () => unsubscribe();
     }, []);
 
-    // 3. مراقبة طلبات التبرع (كودك الأصلي)
+    // 3. مراقبة طلبات التبرع 
     useEffect(() => {
         if (auth.currentUser) {
             const q = query(collection(db, "volunteer_requests"), where("requesterId", "==", auth.currentUser.uid));
@@ -148,7 +157,7 @@ function Home() {
         }
     }, []);
 
-    // 4. تحديث السلة عند تغيير المستخدم (كودك الأصلي)
+    // 4. تحديث السلة عند تغيير المستخدم 
     useEffect(() => {
         const unsubscribeAuth = auth.onAuthStateChanged((user) => {
             if (user) {
@@ -159,7 +168,7 @@ function Home() {
         return () => unsubscribeAuth();
     }, []);
 
-    // 5. فلترة البحث والكاتيجوري (كودك الأصلي)
+    // 5. فلترة البحث والكاتيجوري 
     useEffect(() => {
         let result = products;
         const searchFromNav = location.state?.search || "";
@@ -261,38 +270,47 @@ function Home() {
                 )}
             </div>
 
-            {/* --- المودال المضاف (تعديل البروفايل) --- */}
+            {/* --- المودال --- */}
             {profileModalVisible && (
-                <div className="modal-overlay">
-                    <div className="profile-modal">
-                        <div className="modal-header">
-                            <h2>Edit Profile</h2>
-                            <button className="close-btn" onClick={() => setProfileModalVisible(false)}>&times;</button>
-                        </div>
-                        <form onSubmit={handleUpdateProfile}>
-                            <div className="avatar-picker-web">
-                                <img src={previewImage || "https://via.placeholder.com/150"} alt="Profile" />
-                                <label htmlFor="imgInput" className="edit-icon-web">📷</label>
-                                <input id="imgInput" type="file" accept="image/*" hidden onChange={(e) => {
+                <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000 }}>
+                    <div style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '24px', width: '90%', maxWidth: '360px', textAlign: 'center' }}>
+                        <h2 style={{ marginBottom: '20px', fontSize: '20px', fontWeight: 'bold' }}>Edit Profile</h2>
+                        
+                        <div style={{ position: 'relative', width: '100px', height: '100px', margin: '0 auto 25px' }}>
+                            <img 
+                                src={previewImage || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"} 
+                                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '3px solid #3b82f6' }} 
+                            />
+                            <label style={{ position: 'absolute', bottom: '0', right: '0', backgroundColor: '#3b82f6', color: '#fff', width: '30px', height: '30px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', border: '2px solid #fff' }}>
+                                <span style={{fontSize: '14px'}}>📷</span>
+                                <input type="file" accept="image/*" hidden onChange={(e) => {
                                     const file = e.target.files[0];
                                     if(file) {
                                         setTempImageFile(file);
                                         setPreviewImage(URL.createObjectURL(file));
                                     }
                                 }} />
-                            </div>
-                            <div className="web-input-group">
-                                <label>Full Name</label>
-                                <input type="text" value={newUserName} onChange={(e) => setNewUserName(e.target.value)} required />
-                            </div>
-                            <div className="web-input-group">
-                                <label>New Password</label>
-                                <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Leave blank to keep same" />
-                            </div>
-                            <button className="save-btn-web" type="submit" disabled={updating}>
-                                {updating ? "Saving..." : "Save Changes"}
+                            </label>
+                        </div>
+
+                        <input type="text" placeholder="Full Name" value={newUserName} onChange={(e) => setNewUserName(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '15px', border: '1px solid #e2e8f0', borderRadius: '12px', outline: 'none' }} required />
+                        <input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '15px', border: '1px solid #e2e8f0', borderRadius: '12px', outline: 'none' }} />
+                        
+                        <div style={{ marginBottom: '20px' }}>
+                            <input 
+                                type="password" placeholder="Confirm Password" value={confirmPassword} 
+                                onChange={(e) => setConfirmPassword(e.target.value)} 
+                                style={{ width: '100%', padding: '12px', border: '1px solid #e2e8f0', borderRadius: '12px', outline: 'none', borderColor: !passwordsMatch ? '#ef4444' : '#e2e8f0' }}
+                            />
+                            {!passwordsMatch && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '5px', textAlign: 'left', marginLeft: '5px' }}>Passwords do not match</p>}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button onClick={() => setProfileModalVisible(false)} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', backgroundColor: '#f1f5f9', fontWeight: 'bold', cursor: 'pointer' }}>Cancel</button>
+                            <button onClick={handleUpdateProfile} disabled={updating || !passwordsMatch} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', backgroundColor: (!passwordsMatch || updating) ? '#94a3b8' : '#3b82f6', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>
+                                {updating ? "Saving..." : "Confirm"}
                             </button>
-                        </form>
+                        </div>
                     </div>
                 </div>
             )}

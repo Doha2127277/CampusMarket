@@ -55,15 +55,24 @@ const AllRequests = () => {
         } catch (e) { console.error("Chat Error:", e); }
     };
 
-    // تعديل دالة الموافقة لنقل الطلب للمرحلة التالية (المتبرع)
-    const handleApproveByAdmin = async (reqId) => {
+    // تعديل دالة الموافقة لنقل الطلب للمرحلة التالية (المتبرع) وإخفاء المنتج
+    const handleApproveByAdmin = async (reqId, productId) => {
         if (window.confirm("Approve this request to move to donor contact?")) {
             try {
+                // 1. تحديث حالة الطلب
                 await updateDoc(doc(db, "volunteer_requests", reqId), {
                     status: "approved_by_admin", // الحالة الجديدة
                     adminApproved: true,
                     updatedAt: new Date().toISOString()
                 });
+                
+                // 2. تحديث حالة المنتج عشان يختفي من الهوم
+                if (productId) {
+                    await updateDoc(doc(db, "products", productId), {
+                        isSold: true
+                    });
+                }
+                
                 // الطلب سيختفي تلقائياً من صفحة الأدمن بسبب الـ filter في الـ useEffect
             } catch (e) { console.error("Approve Error:", e); }
         }
@@ -124,7 +133,8 @@ const AllRequests = () => {
                                         <div className="info-group"><span>Requester:</span> {req.requesterName}</div>
                                     </div>
                                     <div className="admin-actions">
-                                        <button className="btn-approve" onClick={() => handleApproveByAdmin(req.id)}>Approve</button>
+                                        {/* تمرير productId هنا للدالة */}
+                                        <button className="btn-approve" onClick={() => handleApproveByAdmin(req.id, req.productId)}>Approve</button>
                                         <button className="btn-reject" onClick={() => handleRejectVolunteer(req.id)}>Reject</button>
                                     </div>
                                 </div>
