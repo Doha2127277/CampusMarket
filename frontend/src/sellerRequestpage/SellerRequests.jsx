@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import './SellerRequests.css';
 
 function SellerRequests() {
@@ -8,20 +8,23 @@ function SellerRequests() {
     const [donations, setDonations] = useState([]);
     const [activeTab, setActiveTab] = useState('sales');
     const [commentText, setCommentText] = useState({});
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!auth.currentUser) return;
 
-        // جلب طلبات الشراء
-        
+        // 1. جلب طلبات الشراء
         const unsubOrders = onSnapshot(query(collection(db, "orders"), where("sellerId", "==", auth.currentUser.uid)), (snap) => {
             const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            console.log("Full Orders Data:", data); // عشان تشوف البيانات في الـ Console
             setOrders(data);
         });
 
-        // جلب طلبات التبرع
-        const unsubDonations = onSnapshot(query(collection(db, "volunteer_requests"), where("sellerId", "==", auth.currentUser.uid), where("status", "in", ["approved", "rejected"])), (snap) => {
+        // 2. جلب طلبات التبرع (تم تعديل الحالات لتشمل ما بعد موافقة الأدمن)
+        const unsubDonations = onSnapshot(query(
+            collection(db, "volunteer_requests"), 
+            where("sellerId", "==", auth.currentUser.uid), 
+            where("status", "in", ["approved_by_admin", "approved_by_donor", "approved", "rejected"])
+        ), (snap) => {
             const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setDonations(data);
             setLoading(false);
@@ -32,26 +35,38 @@ function SellerRequests() {
 
     const handleAddComment = async (id, col) => {
         if (!commentText[id]?.trim()) return;
+        
+        // تحديد المرحلة بناءً على نوع الطلب: طلبات التبرع تأخذ 'donor_contact' لفصلها عن شات الأدمن
+        const stage = col === "volunteer_requests" ? 'donor_contact' : 'direct_sales';
+
         await updateDoc(doc(db, col, id), {
             comments: arrayUnion({
                 text: commentText[id],
                 senderId: auth.currentUser.uid,
                 senderRole: 'seller',
+                stage: stage,
                 createdAt: new Date().toISOString()
             })
         });
         setCommentText({ ...commentText, [id]: "" });
     };
 
-    // دالة ذكية لاستخراج الصورة والاسم مهما كان مكانهم في الـ Database
-    const getProductInfo = (item) => {
-        // فحص لو البيانات جوه مصفوفة items (زي الـ Orders) أو مباشرة في الكارت
-        const firstItem = (item.items && item.items.length > 0) ? item.items[0] : {};
-        
-        // تجميع كل البيانات المتاحة للبحث فيها
-        const combinedData = { ...item, ...firstItem };
+    // دالة موافقة المتبرع (جديدة)
+    const handleDonorApprove = async (reqId) => {
+        if (window.confirm("هل أنت موافق على إعطاء هذا المنتج لهذا الطالب؟")) {
+            try {
+                await updateDoc(doc(db, "volunteer_requests", reqId), {
+                    status: "approved_by_donor",
+                    donorApproved: true,
+                    updatedAt: new Date().toISOString()
+                });
+            } catch (e) { console.error("Donor Approve Error:", e); }
+        }
+    };
 
-        // البحث التلقائي عن أي حقل يحتوي على رابط (URL) يبدأ بـ http
+    const getProductInfo = (item) => {
+        const firstItem = (item.items && item.items.length > 0) ? item.items[0] : {};
+        const combinedData = { ...item, ...firstItem };
         const detectedImage = Object.values(combinedData).find(
             val => typeof val === 'string' && (val.startsWith('http') || val.startsWith('https'))
         );
@@ -79,60 +94,45 @@ function SellerRequests() {
                     
                     return (
                         <div key={item.id} className="seller-horizontal-card" style={{ 
-                            display: 'flex', 
-                            flexDirection: 'row', 
-                            background: '#fff',
-                            marginBottom: '20px',
-                            borderRadius: '15px',
-                            border: '1px solid #eee',
-                            minHeight: '200px',
-                            overflow: 'hidden',
-                            boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
+                            display: 'flex', flexDirection: 'row', background: '#fff', marginBottom: '20px',
+                            borderRadius: '15px', border: '1px solid #eee', minHeight: '200px',
+                            overflow: 'hidden', boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
                         }}>
                             
-                            {/* 1. قسم الصورة على اليسار */}
-                            <div style={{ 
-                                width: '200px', 
-                                minWidth: '200px',
-                                backgroundColor: '#f9f9f9',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderRight: '1px solid #eee'
-                            }}>
+                            <div style={{ width: '200px', minWidth: '200px', backgroundColor: '#f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid #eee' }}>
                                 {product.image ? (
-                                    <img 
-                                        src={product.image} 
-                                        alt="product" 
-                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                                    />
+                                    <img src={product.image} alt="product" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 ) : (
-                                    <div style={{ textAlign: 'center', color: '#ccc' }}>
-                                        <p style={{ fontSize: '12px' }}>No Image Found</p>
-                                    </div>
+                                    <div style={{ textAlign: 'center', color: '#ccc' }}><p style={{ fontSize: '12px' }}>No Image Found</p></div>
                                 )}
                             </div>
 
-                            {/* 2. قسم معلومات الطلب في المنتصف */}
                             <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column' }}>
                                 <div className={`status-badge-web ${item.status}`} style={{ width: 'fit-content' }}>{item.status}</div>
                                 <h3 style={{ margin: '15px 0 5px 0', color: '#1a1a1a' }}>{product.name}</h3>
                                 <p style={{ margin: 0, fontWeight: '600', color: '#555' }}>
-                                    {activeTab === 'sales' ? `Buyer: ${item.buyerName || 'Student'}` : `Requester: ${item.requesterName}`}
+                                    {activeTab === 'sales' ? `Buyer: ${item.buyerName || 'Student'}` : `Requester: ${item.requesterName || 'Student'}`}
                                 </p>
                                 
-                                {activeTab === 'sales' && item.status === 'pending' && (
-                                    <div style={{ marginTop: 'auto' }}>
+                                {/* قسم الأزرار المعدل */}
+                                <div style={{ marginTop: 'auto' }}>
+                                    {activeTab === 'sales' && item.status === 'pending' && (
                                         <button className="approve-btn-web" onClick={() => updateDoc(doc(db,"orders",item.id),{status:"approved"})}>
                                             Approve Request
                                         </button>
-                                    </div>
-                                )}
+                                    )}
+                                    {/* زر موافقة المتبرع في التبرعات */}
+                                    {activeTab === 'donations' && item.status === 'approved_by_admin' && (
+                                        <button className="approve-btn-web" style={{ backgroundColor: '#10b981' }} onClick={() => handleDonorApprove(item.id)}>
+                                            Approve Giving
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
-                            {/* 3. قسم الشات على اليمين */}
                             <div style={{ flex: 1.2, padding: '15px', borderLeft: '1px solid #eee', display: 'flex', flexDirection: 'column', backgroundColor: '#fcfcfc' }}>
                                 <div className="messages-list-web" style={{ flex: 1, maxHeight: '120px', overflowY: 'auto' }}>
+                                    {/* الفلترة هنا تضمن عدم ظهور شات الأدمن (stage !== 'admin_review') */}
                                     {item.comments?.filter(c => c.stage !== 'admin_review').map((c, i) => (
                                         <div key={i} className={`msg-bubble-web ${c.senderId === auth.currentUser.uid ? 'me' : 'student'}`}>
                                             <p style={{ margin: 0, fontSize: '13px' }}>{c.text}</p>
