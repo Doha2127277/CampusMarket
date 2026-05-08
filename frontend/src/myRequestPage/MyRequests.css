@@ -14,7 +14,222 @@
     text-align: center;
     margin-bottom: 30px;
 }
+/* MyRequests.css - مطابقة لستايل السيلر */
+.my-requests-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #F8FAFC;
+    min-height: 100vh;
+}
 
+.main-header-web {
+    background-color: #1d0aca;
+    padding: 30px;
+    border-radius: 0 0 40px 40px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.main-title-web {
+    color: white;
+    font-size: 28px;
+    font-weight: 900;
+}
+
+.tabs-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.tab-btn {
+    padding: 10px 25px;
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.tab-btn.active {
+    background: white;
+    color: #1d0aca;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* الكارت بشكل أفقي مطق لستايل السيلر */
+.order-card-web {
+    display: grid;
+    grid-template-columns: 1fr 1fr; 
+    background: white;
+    border-radius: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    overflow: hidden;
+    border: 1px solid #E2E8F0;
+    min-height: 420px;
+}
+
+.order-info-section {
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #F1F5F9;
+}
+
+.status-badge-web {
+    align-self: flex-start;
+    padding: 6px 15px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-bottom: 15px;
+}
+.status-badge-web.approved { background: #E8F5E9; color: #2E7D32; }
+.status-badge-web.pending { background: #FFF3E0; color: #EF6C00; }
+.status-badge-web.rejected { background: #FFEBEE; color: #C62828; }
+.status-badge-web.pending_admin { background: #E0F2FE; color: #0284C7; }
+
+.product-img-my {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 15px;
+    margin-bottom: 15px;
+}
+
+.item-info-text h4 { font-weight: 800; font-size: 18px; color: #1E293B; margin: 0; }
+.price-tag { color: #1d0aca; font-weight: 900; margin: 10px 0; font-size: 16px; }
+
+/* قسم الشات */
+.chat-area-web {
+    background-color: #FCFDFE;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.messages-list-web {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.msg-bubble-web {
+    padding: 10px 15px;
+    border-radius: 15px;
+    max-width: 85%;
+    font-size: 13px;
+}
+
+.msg-bubble-web.me {
+    align-self: flex-end;
+    background: #1d0aca;
+    color: white;
+    border-bottom-right-radius: 2px;
+}
+
+.msg-bubble-web.other {
+    align-self: flex-start;
+    background: white;
+    border: 1px solid #E2E8F0;
+    border-bottom-left-radius: 2px;
+    color: #1E293B;
+}
+
+.chat-input-web {
+    display: flex;
+    gap: 8px;
+}
+
+.chat-input-web input {
+    flex: 1;
+    padding: 10px 15px;
+    border-radius: 12px;
+    border: 1px solid #E2E8F0;
+    outline: none;
+}
+
+.chat-input-web button {
+    background: #1d0aca;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0 20px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+@media (max-width: 850px) {
+    .order-card-web { grid-template-columns: 1fr; min-height: auto; }
+    .order-info-section { border-right: none; border-bottom: 1px solid #F1F5F9; }
+}
+/* زر التأكيد */
+.confirm-btn-web {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+/* المودال */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.rating-card {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    text-align: center;
+    width: 90%;
+    max-width: 400px;
+}
+
+.stars-row {
+    font-size: 30px;
+    margin: 20px 0;
+}
+
+.star {
+    cursor: pointer;
+    filter: grayscale(1);
+    transition: 0.2s;
+}
+
+.star.filled {
+    filter: grayscale(0);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.submit-btn { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+.cancel-btn { background: #f3f4f6; color: #374151; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
 .main-title-web {
     color: white;
     font-size: 28px;
