@@ -13,7 +13,6 @@ function MyRequests() {
   useEffect(() => {
     if (!auth.currentUser) return;
 
-    // Fetch Commercial Orders + Seller Rating
     const unsubOrders = onSnapshot(query(collection(db, "orders"), where("buyerId", "==", auth.currentUser.uid)), async (snap) => {
       const list = await Promise.all(snap.docs.map(async (d) => {
         const data = d.data();
@@ -33,7 +32,6 @@ function MyRequests() {
       setOrders(list);
     });
 
-    // Fetch Volunteer/Grant Requests + Seller Rating
     const unsubGrants = onSnapshot(query(collection(db, "volunteer_requests"), where("requesterId", "==", auth.currentUser.uid)), async (snapshot) => {
       const list = await Promise.all(snapshot.docs.map(async (d) => {
         const data = d.data();
@@ -76,18 +74,27 @@ function MyRequests() {
     return () => { unsubOrders(); unsubGrants(); };
   }, []);
 
-  const handleAddComment = async (id, col) => {
-    if (!commentText[id]?.trim()) return;
+  const handleAddComment = async (item, col) => {
+    if (!commentText[item.id]?.trim()) return;
+
+    // تحديد المرحلة تلقائياً بناءً على حالة طلب التبرع
+    let currentStage = 'direct_sales'; // افتراضي للطلبات التجارية
+    if (col === "volunteer_requests") {
+        // إذا لم يوافق الأدمن بعد، الكلام موجه للأدمن. إذا وافق، الكلام موجه للمتبرع
+        currentStage = item.status === 'pending_admin' ? 'admin_review' : 'donor_contact';
+    }
+
     try {
-      await updateDoc(doc(db, col, id), {
+      await updateDoc(doc(db, col, item.id), {
         comments: arrayUnion({
-          text: commentText[id].trim(),
+          text: commentText[item.id].trim(),
           senderId: auth.currentUser.uid,
           senderRole: 'student',
+          stage: currentStage,
           createdAt: new Date().toISOString()
         })
       });
-      setCommentText({ ...commentText, [id]: "" });
+      setCommentText({ ...commentText, [item.id]: "" });
     } catch (e) { console.error("Comment error:", e); }
   };
 
@@ -106,11 +113,9 @@ function MyRequests() {
       <div className="orders-list-wrapper">
         {(activeTab === 'orders' ? orders : grants).map(item => (
           <div key={item.id} className="order-card-web">
-            
-            {/* Left Section: Product Info */}
             <div className="order-info-section">
                 <div className={`status-badge-web ${item.status}`}>
-                    {item.status ? item.status.replace('_', ' ') : 'Pending'}
+                    {item.status ? item.status.replace(/_/g, ' ') : 'Pending'}
                 </div>
                 
                 <img 
@@ -122,48 +127,55 @@ function MyRequests() {
                 
                 <div className="item-info-text">
                   <h4>{item.displayName || item.productName || (item.items?.[0]?.name) || "Product"}</h4>
-                  
                   <div style={{ fontSize: '12px', color: '#f59e0b', marginBottom: '5px' }}>
                       ⭐ {item.sellerRating?.toFixed(1) || "5.0"} 
                       <span style={{ color: '#888', marginLeft: '4px' }}>({item.totalReviews || 0})</span>
                   </div>
-
                   {activeTab === 'orders' && <p className="price-tag">{item.totalPrice || item.price} EGP</p>}
                 </div>
             </div>
 
-            {/* Right Section: Chat Area */}
             <div className="chat-area-web">
-                <div className="chat-title-web">Messages & Updates</div>
+                {/* عنوان الشات يتغير ديناميكياً ليخبر الطالب مع من يتحدث الآن */}
+                <div className="chat-title-web">
+                    {activeTab === 'orders' ? "Chat with Seller" : 
+                     (item.status === 'pending_admin' ? "🛡️ Chat with Admin" : "👤 Chat with Donor")}
+                </div>
+
                 <div className="messages-list-web">
-                  {item.comments?.map((c, i) => (
+                  {item.comments?.filter(c => {
+                      // في التبرعات: اظهر شات الأدمن فقط لو الحالة انتظار، واظهر شات المتبرع فقط لو تم قبول الطلب
+                      if (activeTab === 'grants') {
+                          const targetStage = item.status === 'pending_admin' ? 'admin_review' : 'donor_contact';
+                          return c.stage === targetStage;
+                      }
+                      return true; // للطلبات العادية اظهر كل شيء
+                  }).map((c, i) => (
                     <div key={i} className={`msg-bubble-web ${c.senderId === auth.currentUser.uid ? 'me' : 'other'}`}>
                        <span className="sender-name-web">
                          {c.senderId === auth.currentUser.uid 
                            ? "Me" 
-                           : (c.senderRole === 'admin' 
-                               ? "🛡️ Admin" 
-                               : `👤 ${item.sellerName || item.items?.[0]?.sellerName || "Seller"}`)
-                         }
+                           : (c.senderRole === 'admin' ? "🛡️ Admin" : `👤 ${item.sellerName || "Provider"}`)}
                        </span>
                        <p style={{margin: 0}}>{c.text}</p>
                     </div>
                   ))}
                 </div>
+
                 <div className="chat-input-web">
                   <input 
                     value={commentText[item.id] || ""} 
                     onChange={e => setCommentText({...commentText, [item.id]: e.target.value})} 
-                    placeholder="Type a message..." 
+                    placeholder={activeTab === 'grants' && item.status === 'pending_admin' ? "Message admin..." : "Message provider..."} 
                   />
-                  <button onClick={() => handleAddComment(item.id, activeTab === 'orders' ? "orders" : "volunteer_requests")}>Send</button>
+                  <button onClick={() => handleAddComment(item, activeTab === 'orders' ? "orders" : "volunteer_requests")}>Send</button>
                 </div>
             </div>
           </div>
         ))}
 
         {(activeTab === 'orders' ? orders : grants).length === 0 && (
-          <div style={{textAlign: 'center', padding: '50px', color: '#64748B'}}>No requests found at the moment.</div>
+          <div style={{textAlign: 'center', padding: '50px', color: '#64748B'}}>No requests found.</div>
         )}
       </div>
     </div>
