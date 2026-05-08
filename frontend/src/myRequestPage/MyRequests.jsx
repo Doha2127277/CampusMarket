@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../firebase'; 
 import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
-import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 import './MyRequests.css';
 
 function MyRequests() {
@@ -9,7 +8,6 @@ function MyRequests() {
   const [grants, setGrants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('orders');
-  const [commentText, setCommentText] = useState({});
   const [commentText, setCommentText] = useState({});
 
   useEffect(() => {
@@ -44,7 +42,6 @@ function MyRequests() {
         let displayPhoto = data.productPhotoURL;
         let displayName = data.productName;
 
-        // Fetch product & seller details
         if (data.productId) {
           try {
             const pDoc = await getDoc(doc(db, "products", data.productId));
@@ -76,19 +73,14 @@ function MyRequests() {
       setLoading(false);
     });
 
-
     return () => { unsubOrders(); unsubGrants(); };
   }, []);
 
   const handleAddComment = async (id, col) => {
     if (!commentText[id]?.trim()) return;
-  const handleAddComment = async (id, col) => {
-    if (!commentText[id]?.trim()) return;
     try {
       await updateDoc(doc(db, col, id), {
-      await updateDoc(doc(db, col, id), {
         comments: arrayUnion({
-          text: commentText[id].trim(),
           text: commentText[id].trim(),
           senderId: auth.currentUser.uid,
           senderRole: 'student',
@@ -97,27 +89,20 @@ function MyRequests() {
       });
       setCommentText({ ...commentText, [id]: "" });
     } catch (e) { console.error("Comment error:", e); }
-      setCommentText({ ...commentText, [id]: "" });
-    } catch (e) { console.error("Comment error:", e); }
   };
 
-  if (loading) return <div className="loading-state">Loading My Activities...</div>;
   if (loading) return <div className="loading-state">Loading My Activities...</div>;
 
   return (
     <div className="my-requests-container">
       <header className="main-header-web">
         <h1 className="main-title-web">My Activity</h1>
-        <h1 className="main-title-web">My Activity</h1>
         <div className="tabs-container">
-          <button className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')}>My Orders</button>
-          <button className={`tab-btn ${activeTab === 'grants' ? 'active' : ''}`} onClick={() => setActiveTab('grants')}>My Grants</button>
           <button className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')}>My Orders</button>
           <button className={`tab-btn ${activeTab === 'grants' ? 'active' : ''}`} onClick={() => setActiveTab('grants')}>My Grants</button>
         </div>
       </header>
 
-      <div className="orders-list-wrapper">
       <div className="orders-list-wrapper">
         {(activeTab === 'orders' ? orders : grants).map(item => (
           <div key={item.id} className="order-card-web">
@@ -125,7 +110,7 @@ function MyRequests() {
             {/* Left Section: Product Info */}
             <div className="order-info-section">
                 <div className={`status-badge-web ${item.status}`}>
-                    {item.status.replace('_', ' ')}
+                    {item.status ? item.status.replace('_', ' ') : 'Pending'}
                 </div>
                 
                 <img 
@@ -138,7 +123,6 @@ function MyRequests() {
                 <div className="item-info-text">
                   <h4>{item.displayName || item.productName || (item.items?.[0]?.name) || "Product"}</h4>
                   
-                  {/* إضافة التقييم هنا تحت الاسم مباشرة */}
                   <div style={{ fontSize: '12px', color: '#f59e0b', marginBottom: '5px' }}>
                       ⭐ {item.sellerRating?.toFixed(1) || "5.0"} 
                       <span style={{ color: '#888', marginLeft: '4px' }}>({item.totalReviews || 0})</span>
@@ -163,7 +147,6 @@ function MyRequests() {
                          }
                        </span>
                        <p style={{margin: 0}}>{c.text}</p>
-                       <p style={{margin: 0}}>{c.text}</p>
                     </div>
                   ))}
                 </div>
@@ -176,14 +159,8 @@ function MyRequests() {
                   <button onClick={() => handleAddComment(item.id, activeTab === 'orders' ? "orders" : "volunteer_requests")}>Send</button>
                 </div>
             </div>
-
-
           </div>
         ))}
-
-        {(activeTab === 'orders' ? orders : grants).length === 0 && (
-          <div style={{textAlign: 'center', padding: '50px', color: '#64748B'}}>No requests found at the moment.</div>
-        )}
 
         {(activeTab === 'orders' ? orders : grants).length === 0 && (
           <div style={{textAlign: 'center', padding: '50px', color: '#64748B'}}>No requests found at the moment.</div>
@@ -192,6 +169,5 @@ function MyRequests() {
     </div>
   );
 }
-
 
 export default MyRequests;
