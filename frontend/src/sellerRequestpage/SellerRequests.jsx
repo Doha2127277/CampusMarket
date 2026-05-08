@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 import './SellerRequests.css';
 
 function SellerRequests() {
     const [orders, setOrders] = useState([]);
     const [donations, setDonations] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [commentText, setCommentText] = useState({});
     const [activeTab, setActiveTab] = useState('sales');
+    const [commentText, setCommentText] = useState({});
 
     useEffect(() => {
         if (!auth.currentUser) return;
 
         // جلب طلبات الشراء
+        
         const unsubOrders = onSnapshot(query(collection(db, "orders"), where("sellerId", "==", auth.currentUser.uid)), (snap) => {
             const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             console.log("Full Orders Data:", data); // عشان تشوف البيانات في الـ Console
@@ -30,20 +30,17 @@ function SellerRequests() {
         return () => { unsubOrders(); unsubDonations(); };
     }, []);
 
-    const handleAddComment = async (id, collectionName) => {
+    const handleAddComment = async (id, col) => {
         if (!commentText[id]?.trim()) return;
-        try {
-            await updateDoc(doc(db, collectionName, id), {
-                comments: arrayUnion({
-                    text: commentText[id].trim(),
-                    senderId: auth.currentUser.uid,
-                    senderRole: 'seller',
-                    stage: collectionName === 'volunteer_requests' ? 'donor_delivery' : 'sales',
-                    createdAt: new Date().toISOString()
-                })
-            });
-            setCommentText(prev => ({ ...prev, [id]: "" }));
-        } catch (error) { console.error(error); }
+        await updateDoc(doc(db, col, id), {
+            comments: arrayUnion({
+                text: commentText[id],
+                senderId: auth.currentUser.uid,
+                senderRole: 'seller',
+                createdAt: new Date().toISOString()
+            })
+        });
+        setCommentText({ ...commentText, [id]: "" });
     };
 
     // دالة ذكية لاستخراج الصورة والاسم مهما كان مكانهم في الـ Database
@@ -70,13 +67,12 @@ function SellerRequests() {
     return (
         <div className="seller-requests-container">
             <header className="seller-header-web">
-                <h1>Provider Dashboard</h1>
+                <h1 className="seller-title-web">Provider Dashboard</h1>
                 <div className="admin-tabs">
-                    <button className={activeTab === 'sales' ? 'active' : ''} onClick={() => setActiveTab('sales')}>Commercial Sales</button>
+                    <button className={activeTab === 'sales' ? 'active' : ''} onClick={() => setActiveTab('sales')}>Sales</button>
                     <button className={activeTab === 'donations' ? 'active' : ''} onClick={() => setActiveTab('donations')}>Donations</button>
                 </div>
             </header>
-
             <div className="orders-grid-web">
                 {(activeTab === 'sales' ? orders : donations).map((item) => {
                     const product = getProductInfo(item);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../firebase'; 
 import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 import './MyRequests.css';
 
 function MyRequests() {
@@ -8,6 +9,7 @@ function MyRequests() {
   const [grants, setGrants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('orders');
+  const [commentText, setCommentText] = useState({});
   const [commentText, setCommentText] = useState({});
 
   useEffect(() => {
@@ -74,14 +76,19 @@ function MyRequests() {
       setLoading(false);
     });
 
+
     return () => { unsubOrders(); unsubGrants(); };
   }, []);
 
   const handleAddComment = async (id, col) => {
     if (!commentText[id]?.trim()) return;
+  const handleAddComment = async (id, col) => {
+    if (!commentText[id]?.trim()) return;
     try {
       await updateDoc(doc(db, col, id), {
+      await updateDoc(doc(db, col, id), {
         comments: arrayUnion({
+          text: commentText[id].trim(),
           text: commentText[id].trim(),
           senderId: auth.currentUser.uid,
           senderRole: 'student',
@@ -90,20 +97,27 @@ function MyRequests() {
       });
       setCommentText({ ...commentText, [id]: "" });
     } catch (e) { console.error("Comment error:", e); }
+      setCommentText({ ...commentText, [id]: "" });
+    } catch (e) { console.error("Comment error:", e); }
   };
 
+  if (loading) return <div className="loading-state">Loading My Activities...</div>;
   if (loading) return <div className="loading-state">Loading My Activities...</div>;
 
   return (
     <div className="my-requests-container">
       <header className="main-header-web">
         <h1 className="main-title-web">My Activity</h1>
+        <h1 className="main-title-web">My Activity</h1>
         <div className="tabs-container">
+          <button className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')}>My Orders</button>
+          <button className={`tab-btn ${activeTab === 'grants' ? 'active' : ''}`} onClick={() => setActiveTab('grants')}>My Grants</button>
           <button className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')}>My Orders</button>
           <button className={`tab-btn ${activeTab === 'grants' ? 'active' : ''}`} onClick={() => setActiveTab('grants')}>My Grants</button>
         </div>
       </header>
 
+      <div className="orders-list-wrapper">
       <div className="orders-list-wrapper">
         {(activeTab === 'orders' ? orders : grants).map(item => (
           <div key={item.id} className="order-card-web">
@@ -149,6 +163,7 @@ function MyRequests() {
                          }
                        </span>
                        <p style={{margin: 0}}>{c.text}</p>
+                       <p style={{margin: 0}}>{c.text}</p>
                     </div>
                   ))}
                 </div>
@@ -162,8 +177,13 @@ function MyRequests() {
                 </div>
             </div>
 
+
           </div>
         ))}
+
+        {(activeTab === 'orders' ? orders : grants).length === 0 && (
+          <div style={{textAlign: 'center', padding: '50px', color: '#64748B'}}>No requests found at the moment.</div>
+        )}
 
         {(activeTab === 'orders' ? orders : grants).length === 0 && (
           <div style={{textAlign: 'center', padding: '50px', color: '#64748B'}}>No requests found at the moment.</div>
@@ -172,5 +192,6 @@ function MyRequests() {
     </div>
   );
 }
+
 
 export default MyRequests;
