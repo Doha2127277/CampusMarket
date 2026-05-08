@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../firebase'; 
 import { collection, onSnapshot, query, where, addDoc, deleteDoc, doc, getDocs, serverTimestamp, getDoc } from "firebase/firestore";
-import { updateProfile, updatePassword, signOut } from "firebase/auth";
 import { useNavigate, useLocation } from "react-router-dom";
 import './Home.css';
 
@@ -18,21 +17,13 @@ function Home() {
         return saved ? JSON.parse(saved) : [];
     });
 
-    // --- Profile State ---
-    const [profileModalVisible, setProfileModalVisible] = useState(false);
-    const [newUserName, setNewUserName] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [selectedImage, setSelectedImage] = useState(null); 
-    const [tempImageFile, setTempImageFile] = useState(null); 
-    const [tempImagePreview, setTempImagePreview] = useState(null); 
-    const [updating, setUpdating] = useState(false);
-
     const navigate = useNavigate();
     const location = useLocation();
     const categories = ["All", "Engineering", "Medicine", "Business"];
 
-    // 1. مراقبة الـ Navbar لفتح البروفايل
+    // 1. مراقبة الـ Navbar لفتح البروفايل (لو محتاج تكمله المودال موجود تحت)
+    const [profileModalVisible, setProfileModalVisible] = useState(false);
+
     useEffect(() => {
         if (location.state?.openProfile) {
             setProfileModalVisible(true);
@@ -67,7 +58,7 @@ function Home() {
         return () => unsubscribe();
     }, []);
 
-    // 3. مراقبة طلبات التبرع لتحديث حالة الزر فوراً
+    // 3. مراقبة طلبات التبرع
     useEffect(() => {
         if (auth.currentUser) {
             const q = query(collection(db, "volunteer_requests"), where("requesterId", "==", auth.currentUser.uid));
@@ -79,12 +70,10 @@ function Home() {
         }
     }, []);
 
-    // 4. تحديث بيانات المستخدم عند تسجيل الدخول
+    // 4. تحديث السلة عند تغيير المستخدم
     useEffect(() => {
         const unsubscribeAuth = auth.onAuthStateChanged((user) => {
             if (user) {
-                setNewUserName(user.displayName || "");
-                setSelectedImage(user.photoURL || "");
                 const savedCart = localStorage.getItem(`cart_${user.uid}`);
                 setCart(savedCart ? JSON.parse(savedCart) : []);
             }
@@ -163,10 +152,15 @@ function Home() {
                         const isInCart = cart.some(item => String(item.id) === String(product.id));
                         const isRequested = volunteerRequests.some(id => String(id) === String(product.id));
                         
+                        // التحقق إذا كان المنتج ملك للمستخدم الحالي
+                        const isMine = auth.currentUser && (product.userId === auth.currentUser.uid || product.sellerId === auth.currentUser.uid);
+                        
                         const isAdded = isFree ? isRequested : isInCart;
-                        const buttonText = isAdded ? "Remove" : "Add";
-                        const buttonColor = isAdded ? "#ef4444" : "#10b981"; // أحمر عند الحذف وأخضر عند الإضافة
-                        const icon = isFree ? "❤️" : "🛒";
+                        
+                        // تعديل حالة الزر بناءً على الملكية
+                        const buttonText = isMine ? "  YourProduct" : (isAdded ? "Remove" : "Add");
+                        const buttonColor = isMine ? "#94a3b8" : (isAdded ? "#ef4444" : "#10b981");
+                        const icon = isMine ? "✨" : (isFree ? "❤️" : "🛒");
 
                         return (
                             <div key={product.id} className="product-card" onClick={() => navigate(`/product/${product.id}`)}>
@@ -176,7 +170,6 @@ function Home() {
                                         <h3 className="product-name">{product.name}</h3>
                                         <div style={{ textAlign: 'right' }}>
                                             <span className="product-price" style={{ display: 'block' }}>{isFree ? "Free" : `${product.price} EGP`}</span>
-                                            {/* تكبير حجم النجمة */}
                                             <div style={{ fontSize: '15px', color: '#f59e0b', marginTop: '2px', fontWeight: 'bold' }}>
                                                 ⭐{product.sellerRating?.toFixed(1)} 
                                                 <span style={{ color: '#888', marginLeft: '2px', fontSize: '11px' }}>({product.totalReviews})</span>
@@ -186,22 +179,27 @@ function Home() {
                                     <div className="card-actions-row">
                                         <button 
                                             className="cart-action-btn"
+                                            disabled={isMine} // منع الضغط إذا كان المنتج ملكي
                                             style={{ 
                                                 backgroundColor: buttonColor, 
                                                 color: 'white', 
                                                 border: 'none', 
                                                 padding: '10px 12px', 
                                                 borderRadius: '10px', 
-                                                cursor: 'pointer',
+                                                cursor: isMine ? 'not-allowed' : 'pointer',
                                                 width: '100%',
                                                 display: 'flex',
                                                 justifyContent: 'center',
                                                 alignItems: 'center',
-                                                gap: '10px', // وضع السلة بجانب القلب/النص
+                                                gap: '10px',
                                                 fontWeight: 'bold',
-                                                transition: '0.3s'
+                                                transition: '0.3s',
+                                                opacity: isMine ? 0.7 : 1
                                             }} 
-                                            onClick={(e) => isFree ? handleVolunteerToggle(e, product) : handleCartToggle(e, product)}
+                                            onClick={(e) => {
+                                                if (isMine) return;
+                                                isFree ? handleVolunteerToggle(e, product) : handleCartToggle(e, product)
+                                            }}
                                         >
                                             {buttonText} {icon}
                                         </button>
@@ -212,7 +210,7 @@ function Home() {
                     })}
                 </div>
             </div>
-            {/* ... كود المودال الخاص بالبروفايل يظل كما هو بالأسفل ... */}
+            {/* يمكنك هنا إضافة مودال البروفايل إذا كان مطلوباً في نفس الصفحة */}
         </div>
     );
 }
