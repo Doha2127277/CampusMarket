@@ -1,15 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase"; 
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import "./Home.css";
-
+import Fuse from "fuse.js";
+import debounce from "lodash/debounce";
 function Navbar({ role, setRole }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [search, setSearch] = useState("");
+const [search, setSearch] = useState("");
+const [suggestions, setSuggestions] = useState([]);
+const [activeCategory, setActiveCategory] = useState("All");
+const [searchHistory, setSearchHistory] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
   const [cartCount, setCartCount] = useState(0); 
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [pendingGrantsCount, setPendingGrantsCount] = useState(0); 
   const navigate = useNavigate();
+useEffect(() => {
+  const history = localStorage.getItem("searchHistory");
+  if (history) setSearchHistory(JSON.parse(history));
+}, []);
 
   useEffect(() => {
     // 1. تحديث عدد السلة من الـ LocalStorage
@@ -44,16 +54,106 @@ function Navbar({ role, setRole }) {
     });
 
     window.addEventListener("storage", updateCart);
+    const unsubscribeProducts = onSnapshot(
+  collection(db, "products"),
+  (snapshot) => {
+    const arr = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    setAllProducts(arr);
+  }
+);
     const interval = setInterval(updateCart, 1000); 
 
     return () => {
+      unsubscribeProducts();
       clearInterval(interval);
       window.removeEventListener("storage", updateCart);
       unsubscribeAuth();
       if (unsubscribeGrants) unsubscribeGrants();
     };
   }, []);
+const fuse = useMemo(
+  () =>
+    new Fuse(allProducts, {
+      keys: ["name", "category", "description"],
+      threshold: 0.35,
+      includeScore: true,
+    }),
+  [allProducts]
+);
+const saveSearch = (q) => {
+  if (!q.trim()) return;
 
+  const updated = [
+    q,
+    ...searchHistory.filter(i => i.toLowerCase() !== q.toLowerCase())
+  ].slice(0, 10);
+
+  setSearchHistory(updated);
+  localStorage.setItem("searchHistory", JSON.stringify(updated));
+};
+const applySearch = useCallback((text, category = "All") => {
+  let results = allProducts;
+
+  if (text.trim()) {
+    results = fuse.search(text).map(r => r.item);
+  }
+
+  if (category !== "All") {
+    results = results.filter(p => p.category === category);
+  }
+
+  setFilteredProducts(results);
+}, [allProducts, fuse]);
+const generateSuggestions = useCallback((text) => {
+  if (!text.trim()) {
+    setSuggestions(searchHistory);
+    return;
+  }
+
+  const results = fuse
+    .search(text)
+    .slice(0, 5)
+    .map(r => r.item.name);
+
+  const historyMatches = searchHistory.filter(i =>
+    i.toLowerCase().includes(text.toLowerCase())
+  );
+
+  setSuggestions([...new Set([...historyMatches, ...results])].slice(0, 6));
+}, [fuse, searchHistory]);
+// هنبعت الكلمة بس للـ Home مش المنتجات كلها
+  const debouncedSearch = useMemo(() =>
+    debounce((text) => {
+      navigate("/", { state: { searchText: text } });
+    }, 250),
+    [navigate]
+  );
+
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearch(value);
+    
+    if (value.trim()) {
+      saveSearch(value);
+      generateSuggestions(value);
+      debouncedSearch(value);
+    } else {
+      setSuggestions([]);
+      // لو مسح السيرش، نرجع نعرض كل حاجة
+      navigate("/", { state: { searchText: "" } }); 
+    }
+  };
+
+  const handleSuggestionPress = (item) => {
+    setSearch(item);
+    saveSearch(item);
+    setSuggestions([]);
+    navigate("/", { state: { searchText: item } });
+  };
   const handleLinkClick = (path, state = {}) => {
     const protectedPaths = ["/my-requests", "/seller-requests", "/my-product", "/AddOrder", "/all-requests"];
     if (protectedPaths.includes(path) && !role) {
@@ -73,11 +173,7 @@ function Navbar({ role, setRole }) {
     setMenuOpen(false);
   };
 
-  const handleSearch = (e) => {
-    const value = e.target.value;
-    setSearch(value);
-    navigate("/", { state: { search: value } });
-  };
+ 
 
   const isAdmin = role?.toLowerCase() === "admin";
 
@@ -90,15 +186,33 @@ function Navbar({ role, setRole }) {
             <div className="search-navbar">
               <span>🔍</span>
               <input
-                type="text"
-                placeholder=" Search products..."
-                className="search-input-nav"
-                value={search}
-                onChange={handleSearch}
+              type="text"
+              placeholder=" Search products..."
+              className="search-input-nav"
+              value={search}
+              onChange={handleSearch}
+              onFocus={() => {
+                 if(search.trim() === "" && searchHistory.length > 0) {
+                     setSuggestions(searchHistory);
+                 }
+              }}
               />
+              {suggestions.length > 0 && (
+              <div className="search-suggestions-dropdown">
+                {suggestions.map((item, index) => (
+                  <div 
+                    key={index} 
+                    className="suggestion-item"
+                    onClick={() => handleSuggestionPress(item)}
+                  >
+                    
+                    {item}
+                  </div>
+                ))}
             </div>
+            )}
           </div>
-
+</div>
           <div className="nav-right">
             {/* تم إظهار الأيقونات للجميع (بما فيهم الأدمن) */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>

@@ -4,6 +4,7 @@ import { collection, onSnapshot, query, where, addDoc, deleteDoc, doc, getDocs, 
 import { updateProfile, updatePassword, signOut, onAuthStateChanged } from "firebase/auth"; 
 import { useNavigate, useLocation } from "react-router-dom";
 import './Home.css';
+import Fuse from "fuse.js";
 
 function Home() { 
     const [products, setProducts] = useState([]);
@@ -169,15 +170,27 @@ function Home() {
     }, []);
 
     // 5. فلترة البحث والكاتيجوري 
+   // 5. فلترة البحث والكاتيجوري مع بعض
     useEffect(() => {
         let result = products;
-        const searchFromNav = location.state?.search || "";
-        if (activeCategory !== "All") result = result.filter(p => p.category === activeCategory);
-        if (searchFromNav) {
-            result = result.filter(p => p.name.toLowerCase().includes(searchFromNav.toLowerCase()));
+
+        // 1. تطبيق فلتر البحث الأول لو اليوزر كاتب حاجة في الـ Navbar
+        const searchText = location.state?.searchText;
+        if (searchText && searchText.trim() !== "") {
+            const fuse = new Fuse(result, {
+                keys: ["name", "category", "description"],
+                threshold: 0.35,
+            });
+            result = fuse.search(searchText).map(r => r.item);
         }
+
+        // 2. تطبيق فلتر الكاتيجوري على نتايج البحث
+        if (activeCategory !== "All") {
+            result = result.filter(p => p.category === activeCategory);
+        }
+
         setFilteredProducts(result);
-    }, [products, activeCategory, location.state]);
+    }, [products, activeCategory, location.state?.searchText]);
 
     const handleVolunteerToggle = async (e, product) => {
         e.stopPropagation();
